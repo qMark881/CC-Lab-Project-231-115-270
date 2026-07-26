@@ -12,6 +12,14 @@ static void print_usage(const char *prog) {
     fprintf(stderr, "The compiler also accepts Markdown files with a fenced C code block.\n");
 }
 
+static void print_compilation_stage_header(const char *title) {
+    printf("\n%s\n", title);
+    for (size_t i = 0; i < strlen(title); ++i) {
+        putchar('-');
+    }
+    putchar('\n');
+}
+
 int main(int argc, char **argv) {
     if (argc < 2) {
         print_usage(argv[0]);
@@ -51,14 +59,20 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    printf("Abstract Syntax Tree:\n");
+    print_compilation_stage_header("Abstract Syntax Tree");
     ast_print(root, 0);
+
+    print_compilation_stage_header("Visual AST");
+    ast_print_visual(root, "", true);
+
+    print_compilation_stage_header("Readable Summary");
+    ast_print_summary(root, 0);
 
     TacProgram tac;
     tac_init(&tac);
     tac_generate(root, &tac);
 
-    printf("\nThree Address Code:\n");
+    print_compilation_stage_header("Three Address Code");
     tac_print(&tac);
 
     tac_free(&tac);

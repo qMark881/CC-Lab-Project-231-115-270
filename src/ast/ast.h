@@ -33,6 +33,9 @@ ASTNode *ast_add_child(ASTNode *parent, ASTNode *child);
 ASTNode *ast_make_literal(const char *text, DataType type, int line);
 ASTNode *ast_make_identifier(const char *name, int line);
 void ast_print(const ASTNode *node, int indent);
+void ast_print_visual(const ASTNode *node, const char *prefix, bool is_last);
+void ast_print_expression(const ASTNode *node);
+void ast_print_summary(const ASTNode *node, int indent);
 void ast_free(ASTNode *node);
 const char *ast_kind_name(NodeKind kind);
 
