@@ -1,8 +1,8 @@
 # Installation Guide
 
-This document explains how to set up the development environment for this repository.
+This document explains how to set up the required development environment for the Compiler Construction Lab Project.
 
-The project builds cleanly with a standard C toolchain on Linux or WSL.
+The instructions below are intended for **Ubuntu/Debian-based Linux distributions**, which are the recommended platforms for this project.
 
 
 
@@ -10,7 +10,7 @@ The project builds cleanly with a standard C toolchain on Linux or WSL.
 
 Before you begin, ensure that you have:
 
-- Ubuntu 22.04 LTS or later, or WSL with a Linux distribution
+- Ubuntu 22.04 LTS or later (recommended)
 - Internet connection
 - A GitHub account
 
@@ -18,15 +18,15 @@ Before you begin, ensure that you have:
 
 # Required Software
 
-The following software is needed to build and run the current repository.
+The following software must be installed.
 
 | Software | Purpose |
 |-----------|---------|
 | GCC / G++ | C/C++ Compiler |
 | Make | Build Automation |
+| Flex | Lexical Analyzer Generator |
+| Bison | Parser Generator |
 | Git | Version Control |
-
-The compiler front-end in this repository is self-contained, so no additional parser generator is required to build it.
 
 
 
@@ -50,7 +50,23 @@ sudo apt install build-essential
 
 
 
-# Step 3: Install Git
+# Step 3: Install Flex
+
+```bash
+sudo apt install flex
+```
+
+
+
+# Step 4: Install Bison
+
+```bash
+sudo apt install bison
+```
+
+
+
+# Step 5: Install Git
 
 ```bash
 sudo apt install git
@@ -58,7 +74,7 @@ sudo apt install git
 
 
 
-# Step 4: Verify the Installation
+# Step 6: Verify the Installation
 
 Run the following commands to confirm that everything has been installed correctly.
 
@@ -75,12 +91,22 @@ make --version
 ```
 
 ```bash
+flex --version
+```
+
+```bash
+bison --version
+```
+
+```bash
 git --version
 ```
 
+Each command should display the installed version instead of an error message.
 
 
-# Step 5: Configure Git
+
+# Step 7: Configure Git
 
 If you are using Git for the first time, configure your identity.
 
@@ -100,9 +126,17 @@ git config --list
 
 
 
-# Step 6: Clone the Repository
+# Step 8: Fork the Project Repository
 
-Clone your repository.
+1. Open this GitHub repository.
+2. Click **Fork**.
+3. Wait until GitHub creates a copy under your own account.
+
+
+
+# Step 9: Clone Your Repository
+
+Clone **your fork**, not this repository.
 
 ```bash
 git clone https://github.com/<your-username>/<repository-name>.git
@@ -116,31 +150,29 @@ cd <repository-name>
 
 
 
-# Step 7: Build the Project
+# Step 10: Build the Project
 
-Build the compiler executable with:
+If your project includes a Makefile, build it using:
 
 ```bash
 make
 ```
 
-If the build is successful, the compiler executable will be generated according to the repository Makefile.
+If the build is successful, the compiler executable will be generated according to your project's Makefile.
 
 
 
-# Step 8: Run the Compiler
+# Step 11: Run Your Compiler
 
-Use the executable on a sample input file:
+The exact execution command depends on your implementation.
 
-```bash
-make run INPUT=tests/valid/arithmetic.md
-```
-
-or run it directly:
+For example:
 
 ```bash
-./compiler tests/valid/arithmetic.md
+./compiler examples/sample.txt
 ```
+
+Refer to your project's README for the exact command if it differs.
 
 
 
@@ -151,7 +183,6 @@ Before starting new work, synchronize your local repository with GitHub.
 ```bash
 git pull origin main
 ```
-
 
 
 # Saving Your Work
@@ -180,12 +211,22 @@ Commit regularly throughout the project instead of making one large commit near 
 
 # Common Installation Issues
 
-## gcc: command not found
+## flex: command not found
 
-Install the build tools.
+Install Flex.
 
 ```bash
-sudo apt install build-essential
+sudo apt install flex
+```
+
+
+
+## bison: command not found
+
+Install Bison.
+
+```bash
+sudo apt install bison
 ```
 
 
@@ -197,6 +238,18 @@ Install the build tools.
 ```bash
 sudo apt install build-essential
 ```
+
+
+
+## Permission denied
+
+Make sure the generated executable has execute permission.
+
+```bash
+chmod +x compiler
+```
+
+Replace `compiler` with the actual executable name if different.
 
 
 
@@ -217,8 +270,12 @@ The following setup is recommended for this project.
 - Operating System: Ubuntu 22.04 LTS or later
 - Compiler: GCC/G++
 - Build System: Make
+- Lexer Generator: Flex
+- Parser Generator: Bison
 - Version Control: Git
 - Repository Hosting: GitHub
 - Code Editor: Visual Studio Code, CLion, or Vim
 
-If you encounter installation or setup problems that are not covered in this guide, contact the course instructor before the submission deadline.
+
+
+If you encounter installation or setup problems that are not covered in this guide, contact the course instructor before the project submission deadline.

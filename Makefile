@@ -1,3 +1,4 @@
+
 CC = gcc
 CFLAGS = -std=c11 -Wall -Wextra -O2 -I./src
 SRC = src/main.c \
@@ -11,22 +12,13 @@ SRC = src/main.c \
 
 TARGET = compiler
 
-.PHONY: all run demo clean
-
 all: $(TARGET)
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
 
 run: $(TARGET)
-	@if [ -z "$(INPUT)" ]; then \
-		echo "Usage: make run INPUT=path/to/program.md"; \
-		exit 1; \
-	fi
-	./$(TARGET) "$(INPUT)"
-
-demo: $(TARGET)
-	./$(TARGET) tests/valid/full_demo.md
+	./$(TARGET)
 
 clean:
 	rm -f $(TARGET) *.o
