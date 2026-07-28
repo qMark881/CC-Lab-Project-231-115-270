@@ -1,4 +1,3 @@
-
 CC = gcc
 CFLAGS = -std=c11 -Wall -Wextra -O2 -I./src
 SRC = src/main.c \
@@ -11,14 +10,19 @@ SRC = src/main.c \
       src/tac/tac.c
 
 TARGET = compiler
+FILE ?= tests/valid/complete_program.md
 
-all: $(TARGET)
+.PHONY: all build run clean
+
+all: build
+
+build: $(TARGET)
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
 
 run: $(TARGET)
-	./$(TARGET)
+	./$(TARGET) $(FILE)
 
 clean:
 	rm -f $(TARGET) *.o

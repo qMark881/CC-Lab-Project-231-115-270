@@ -1,23 +1,23 @@
 # Compiler Construction Lab Project
 
-This repository contains a modular mini compiler front-end for the language defined in the **Compiler Construction Lab Project Manual.pdf**.
+This repository implements a modular mini compiler front-end for the language defined in the **Compiler Construction Lab Project Manual**.
 
-It includes:
+It demonstrates the full front-end pipeline required by the project manual:
 
 - Lexical analysis
 - Syntax analysis
 - Abstract Syntax Tree (AST) construction
-- Visual AST printing and readable summaries
 - Nested-scope symbol table
 - Semantic analysis
 - Three Address Code (TAC) generation
 
-## Repository Structure
+## Repository Layout
 
-- `src/` — compiler source code
-- `tests/` — valid and invalid test programs
-- `examples/` — sample programs
-- `docs/` — project report and supporting documents
+- `src/` — all compiler source code, grouped by phase
+- `tests/` — valid and invalid programs for grading and viva preparation
+- `examples/` — sample programs for live demonstration
+- `docs/` — project report, language specification, architecture notes, and test matrix
+- `Makefile` — build automation
 
 ## Build
 
@@ -29,24 +29,34 @@ This produces the `compiler` executable in the repository root.
 
 ## Run
 
+You can run the compiler directly:
+
 ```bash
-./compiler tests/valid/arithmetic.md
+./compiler tests/valid/complete_program.md
+```
+
+or use the `run` target:
+
+```bash
+make run FILE=tests/valid/complete_program.md
 ```
 
 The compiler accepts plain source files and also Markdown files that contain the program inside a fenced code block.
 
-## Output Style
+## Output
 
-For every valid program, the compiler prints:
+For valid programs, the compiler prints:
 
-1. The standard AST
-2. A visual tree view of the AST
-3. A readable summary of the program structure
+1. the AST
+2. a visual tree view
+3. a readable summary
 4. Three Address Code (TAC)
 
-This makes the compiler easier to demonstrate during lab evaluation and viva.
+For invalid programs, the compiler reports lexical, syntax, and semantic errors with line numbers wherever possible.
 
-## Supported Language Features
+## Language Features
+
+The language supports:
 
 - `int`, `float`, `bool`
 - variable declarations
@@ -58,18 +68,26 @@ This makes the compiler easier to demonstrate during lab evaluation and viva.
 - `if-else`
 - `while`
 - `print`
-- nested blocks
+- nested blocks with scope handling
+
+## Documentation
+
+Recommended reading order:
+
+1. `docs/Compiler_Architecture.md`
+2. `docs/Language_Specification.md`
+3. `docs/Project_Report.md`
+4. `docs/Test_Matrix.md`
 
 ## Demo Programs
 
-A more complete demonstration program is available at `examples/valid/full_demo.md` and `tests/valid/full_demo.md`.
+A complete demonstration program is available at:
+
+- `examples/valid/full_demo.md`
+- `tests/valid/full_demo.md`
 
 ## Notes
 
-- Valid programs produce AST and TAC output.
-- Lexical, syntax, and semantic errors are reported with line numbers where possible.
+- The project keeps the manual-required compiler front-end stages intact.
 - Generated files and executables are excluded by `.gitignore`.
-
-## Contributing
-
-Please keep changes modular, readable, and well documented.
+- Clear commit history and descriptive messages are recommended for submission.
