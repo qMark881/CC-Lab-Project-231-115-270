@@ -83,6 +83,10 @@ static void print_node_label(const ASTNode *node) {
             break;
         case NODE_IDENTIFIER:
             printf("%s %s", ast_kind_name(node->kind), node->text);
+            /* Show resolved type for identifiers */
+            if (node->data_type != TYPE_VOID && node->data_type != TYPE_ERROR) {
+                printf(" : %s", type_to_string(node->data_type));
+            }
             break;
         default:
             printf("%s", ast_kind_name(node->kind));
@@ -91,7 +95,7 @@ static void print_node_label(const ASTNode *node) {
             }
             break;
     }
-    if (node->data_type != TYPE_VOID && node->kind != NODE_LITERAL) {
+    if (node->data_type != TYPE_VOID && node->kind != NODE_LITERAL && node->kind != NODE_IDENTIFIER) {
         printf(" : %s", type_to_string(node->data_type));
     }
     printf(" [line %d]\n", node->line);
@@ -134,8 +138,14 @@ static void print_visual_label(const ASTNode *node) {
         }
     }
 
+    /* Enhanced type information display */
     if (node->data_type != TYPE_VOID && node->data_type != TYPE_ERROR && node->kind != NODE_PROGRAM && node->kind != NODE_BLOCK) {
         printf(" : %s", type_to_string(node->data_type));
+    }
+    
+    /* Show line number for better debugging */
+    if (node->kind != NODE_PROGRAM && node->kind != NODE_BLOCK) {
+        printf(" (line %d)", node->line);
     }
 }
 
@@ -236,6 +246,10 @@ static void ast_print_summary_node(const ASTNode *node, int indent) {
             } else {
                 printf("<missing-id>");
             }
+            /* Show type information */
+            if (node->data_type != TYPE_VOID) {
+                printf(" : %s", type_to_string(node->data_type));
+            }
             if (node->child_count > 1) {
                 printf(" = ");
                 ast_print_expression(node->children[1]);
@@ -251,6 +265,10 @@ static void ast_print_summary_node(const ASTNode *node, int indent) {
                 printf("<missing-id> = ");
             }
             ast_print_expression(node->child_count > 1 ? node->children[1] : NULL);
+            /* Show assignment type */
+            if (node->data_type != TYPE_VOID) {
+                printf(" : %s", type_to_string(node->data_type));
+            }
             printf("\n");
             break;
 
@@ -258,6 +276,10 @@ static void ast_print_summary_node(const ASTNode *node, int indent) {
             print_indent(indent);
             fputs("print ", stdout);
             ast_print_expression(node->child_count > 0 ? node->children[0] : NULL);
+            /* Show expression type */
+            if (node->child_count > 0 && node->children[0] && node->children[0]->data_type != TYPE_VOID) {
+                printf(" : %s", type_to_string(node->children[0]->data_type));
+            }
             printf("\n");
             break;
 
@@ -265,6 +287,10 @@ static void ast_print_summary_node(const ASTNode *node, int indent) {
             print_indent(indent);
             printf("if (");
             ast_print_expression(node->child_count > 0 ? node->children[0] : NULL);
+            /* Show condition type */
+            if (node->child_count > 0 && node->children[0] && node->children[0]->data_type != TYPE_VOID) {
+                printf(" : %s", type_to_string(node->children[0]->data_type));
+            }
             printf(")\n");
             if (node->child_count > 1) {
                 print_indent(indent);
@@ -282,6 +308,10 @@ static void ast_print_summary_node(const ASTNode *node, int indent) {
             print_indent(indent);
             printf("while (");
             ast_print_expression(node->child_count > 0 ? node->children[0] : NULL);
+            /* Show condition type */
+            if (node->child_count > 0 && node->children[0] && node->children[0]->data_type != TYPE_VOID) {
+                printf(" : %s", type_to_string(node->children[0]->data_type));
+            }
             printf(")\n");
             if (node->child_count > 1) {
                 ast_print_summary_node(node->children[1], indent + 1);
@@ -307,6 +337,34 @@ static void ast_print_summary_node(const ASTNode *node, int indent) {
 
 void ast_print_summary(const ASTNode *node, int indent) {
     ast_print_summary_node(node, indent);
+}
+
+/* Enhanced detailed printing with additional type and scope information */
+void ast_print_detailed(const ASTNode *node) {
+    if (!node) {
+        printf("NULL AST Node\n");
+        return;
+    }
+    
+    printf("=== Detailed AST Information ===\n");
+    printf("Node Kind: %s\n", ast_kind_name(node->kind));
+    printf("Text: %s\n", node->text ? node->text : "(null)");
+    printf("Line: %d\n", node->line);
+    printf("Data Type: %s\n", type_to_string(node->data_type));
+    printf("Child Count: %d\n", node->child_count);
+    printf("Child Capacity: %d\n", node->child_cap);
+    
+    if (node->child_count > 0) {
+        printf("Children:\n");
+        for (int i = 0; i < node->child_count; ++i) {
+            printf("  [%d] %s", i, ast_kind_name(node->children[i]->kind));
+            if (node->children[i]->text) {
+                printf(" (%s)", node->children[i]->text);
+            }
+            printf(" [line %d]\n", node->children[i]->line);
+        }
+    }
+    printf("===============================\n");
 }
 
 void ast_free(ASTNode *node) {

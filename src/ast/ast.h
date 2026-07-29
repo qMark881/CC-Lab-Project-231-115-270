@@ -36,6 +36,7 @@ void ast_print(const ASTNode *node, int indent);
 void ast_print_visual(const ASTNode *node, const char *prefix, bool is_last);
 void ast_print_expression(const ASTNode *node);
 void ast_print_summary(const ASTNode *node, int indent);
+void ast_print_detailed(const ASTNode *node);
 void ast_free(ASTNode *node);
 const char *ast_kind_name(NodeKind kind);
 
