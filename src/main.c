@@ -9,10 +9,14 @@
 
 #define COMPILER_VERSION "ZorvLabs Mini Compiler 2.0"
 
+static bool verbose_mode = false;
+
 static void print_usage(const char *prog) {
-    fprintf(stderr, "Usage: %s <source-file | ->\n", prog);
-    fprintf(stderr, "       %s --help\n", prog);
-    fprintf(stderr, "       %s --version\n", prog);
+    fprintf(stderr, "Usage: %s [options] <source-file | ->\n", prog);
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "  --help, -h       Show this help message\n");
+    fprintf(stderr, "  --version, -v    Show compiler version\n");
+    fprintf(stderr, "  --verbose, -V     Enable verbose output with detailed compilation information\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "The compiler accepts plain source files and Markdown files with a fenced C code block.\n");
     fprintf(stderr, "Use '-' to read source from standard input.\n");
@@ -52,28 +56,67 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0) {
+    /* Parse command line options */
+    int source_arg = 1;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+            print_usage(argv[0]);
+            return EXIT_SUCCESS;
+        }
+        if (strcmp(argv[i], "--version") == 0 || strcmp(argv[i], "-v") == 0) {
+            puts(COMPILER_VERSION);
+            return EXIT_SUCCESS;
+        }
+        if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-V") == 0) {
+            verbose_mode = true;
+            source_arg = i + 1;
+            continue;
+        }
+        if (argv[i][0] != '-') {
+            source_arg = i;
+            break;
+        }
+    }
+
+    if (source_arg >= argc) {
         print_usage(argv[0]);
-        return EXIT_SUCCESS;
-    }
-
-    if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0) {
-        puts(COMPILER_VERSION);
-        return EXIT_SUCCESS;
-    }
-
-    char *source = load_source_text(argv[1]);
-    if (!source) {
-        fprintf(stderr, "Error: could not open input source '%s'\n", argv[1]);
         return EXIT_FAILURE;
+    }
+
+    if (verbose_mode) {
+        printf("=== Verbose Mode Enabled ===\n");
+        printf("Compiler: %s\n", COMPILER_VERSION);
+        printf("Source file: %s\n", argv[source_arg]);
+        printf("==============================\n\n");
+    }
+
+    char *source = load_source_text(argv[source_arg]);
+    if (!source) {
+        fprintf(stderr, "Error: could not open input source '%s'\n", argv[source_arg]);
+        return EXIT_FAILURE;
+    }
+
+    if (verbose_mode) {
+        printf("Source code loaded (%zu bytes)\n", strlen(source));
+        printf("=== Source Code ===\n%s\n=== End Source ===\n\n", source);
     }
 
     Parser parser;
     parser_init(&parser, source);
+    
+    if (verbose_mode) {
+        printf("=== Starting Lexical and Syntax Analysis ===\n");
+    }
+    
     ASTNode *root = parse_program(&parser);
+    int parser_errors = parser.error_count;
     parser_destroy(&parser);
 
-    if (parser.error_count > 0) {
+    if (verbose_mode) {
+        printf("Syntax analysis completed. Parser errors: %d\n", parser_errors);
+    }
+
+    if (parser_errors > 0) {
         fprintf(stderr, "\nCompilation stopped due to syntax/lexical errors.\n");
         ast_free(root);
         free(source);
@@ -82,14 +125,28 @@ int main(int argc, char **argv) {
 
     SemanticContext sem;
     semantic_init(&sem);
+    
+    if (verbose_mode) {
+        printf("=== Starting Semantic Analysis ===\n");
+    }
+    
     semantic_analyze(root, &sem);
+    int semantic_errors = sem.error_count;
 
-    if (sem.error_count > 0) {
+    if (verbose_mode) {
+        printf("Semantic analysis completed. Semantic errors: %d\n", semantic_errors);
+    }
+
+    if (semantic_errors > 0) {
         fprintf(stderr, "\nCompilation stopped due to semantic errors.\n");
         semantic_destroy(&sem);
         ast_free(root);
         free(source);
         return EXIT_FAILURE;
+    }
+
+    if (verbose_mode) {
+        printf("=== Starting Code Generation ===\n");
     }
 
     print_compilation_stage_header("Abstract Syntax Tree");
@@ -103,12 +160,30 @@ int main(int argc, char **argv) {
 
     TacProgram tac;
     tac_init(&tac);
+    
+    if (verbose_mode) {
+        printf("=== Generating Three Address Code ===\n");
+    }
+    
     tac_generate(root, &tac);
+
+    if (verbose_mode) {
+        printf("TAC generation completed. Instructions generated.\n");
+    }
 
     print_compilation_stage_header("Three Address Code");
     tac_print(&tac);
 
     print_success_footer();
+
+    if (verbose_mode) {
+        printf("=== Compilation Summary ===\n");
+        printf("Total source size: %zu bytes\n", strlen(source));
+        printf("Parser errors: %d\n", parser_errors);
+        printf("Semantic errors: %d\n", semantic_errors);
+        printf("TAC instructions: %d\n", tac.instruction_count);
+        printf("========================\n");
+    }
 
     tac_free(&tac);
     semantic_destroy(&sem);
