@@ -7,9 +7,15 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define COMPILER_VERSION "ZorvLabs Mini Compiler 2.0"
+
 static void print_usage(const char *prog) {
-    fprintf(stderr, "Usage: %s <source-file>\n", prog);
-    fprintf(stderr, "The compiler also accepts Markdown files with a fenced C code block.\n");
+    fprintf(stderr, "Usage: %s <source-file | ->\n", prog);
+    fprintf(stderr, "       %s --help\n", prog);
+    fprintf(stderr, "       %s --version\n", prog);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "The compiler accepts plain source files and Markdown files with a fenced C code block.\n");
+    fprintf(stderr, "Use '-' to read source from standard input.\n");
 }
 
 static void print_compilation_stage_header(const char *title) {
@@ -20,20 +26,47 @@ static void print_compilation_stage_header(const char *title) {
     putchar('\n');
 }
 
+static void print_success_footer(void) {
+    print_compilation_stage_header("Compilation Result");
+    puts("Compilation succeeded without lexical, syntax, or semantic errors.");
+}
+
+static char *load_source_text(const char *input_path) {
+    if (strcmp(input_path, "-") == 0) {
+        return read_entire_stream(stdin);
+    }
+
+    char *raw = read_entire_file(input_path);
+    if (!raw) {
+        return NULL;
+    }
+
+    char *source = extract_code_block(raw);
+    free(raw);
+    return source;
+}
+
 int main(int argc, char **argv) {
     if (argc < 2) {
         print_usage(argv[0]);
         return EXIT_FAILURE;
     }
 
-    char *raw = read_entire_file(argv[1]);
-    if (!raw) {
-        fprintf(stderr, "Error: could not open input file '%s'\n", argv[1]);
-        return EXIT_FAILURE;
+    if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0) {
+        print_usage(argv[0]);
+        return EXIT_SUCCESS;
     }
 
-    char *source = extract_code_block(raw);
-    free(raw);
+    if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0) {
+        puts(COMPILER_VERSION);
+        return EXIT_SUCCESS;
+    }
+
+    char *source = load_source_text(argv[1]);
+    if (!source) {
+        fprintf(stderr, "Error: could not open input source '%s'\n", argv[1]);
+        return EXIT_FAILURE;
+    }
 
     Parser parser;
     parser_init(&parser, source);
@@ -74,6 +107,8 @@ int main(int argc, char **argv) {
 
     print_compilation_stage_header("Three Address Code");
     tac_print(&tac);
+
+    print_success_footer();
 
     tac_free(&tac);
     semantic_destroy(&sem);

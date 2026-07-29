@@ -5,7 +5,7 @@ This repository is organized as a front-end compiler pipeline.
 ## Pipeline
 
 1. **File Reader**
-   - Reads plain source files or Markdown files containing a fenced code block.
+   - Reads plain source files, standard input, or Markdown files containing a fenced code block.
 2. **Lexer**
    - Converts the source text into a stream of tokens.
 3. **Parser**
@@ -46,5 +46,6 @@ A successful compilation prints:
 2. visual AST
 3. readable summary
 4. TAC
+5. a final success message
 
 If a lexical, syntax, or semantic error occurs, the compiler stops before printing final output and reports the issue clearly.

@@ -20,13 +20,13 @@ A formal grammar and operator hierarchy are documented in `docs/Language_Specifi
 
 ## 8. Compiler Architecture
 The compilation pipeline is:
-1. read the source file
+1. read the source file or standard input
 2. optionally extract a fenced code block from Markdown
-3. tokenize the input
+3. tokenize the input stream
 4. parse the token stream into an AST
 5. perform semantic analysis with scoped symbol tracking
 6. generate TAC
-7. print the tree and TAC output for demonstration
+7. print the tree, summary output, and TAC output for demonstration
 
 Each compiler phase is implemented in a separate source module under `src/`.
 
@@ -38,6 +38,7 @@ The lexer recognizes:
 - arithmetic, relational, logical, assignment, and delimiter tokens
 - comments and whitespace, which are discarded
 - invalid tokens, which are reported as lexical errors
+- unterminated block comments, which are reported as lexical errors
 
 Line numbers are tracked so diagnostics can be reported precisely.
 
@@ -115,7 +116,7 @@ The `tests/` directory contains valid and invalid programs that demonstrate:
 - syntax errors
 - semantic errors
 
-The test set covers the manual's required failure cases and also includes examples for floating-point arithmetic, logical expressions, and nested blocks.
+The test set covers the manual's required failure cases and also includes examples for floating-point arithmetic, logical expressions, nested blocks, and unterminated comment detection.
 
 ## 17. Conclusion
 This repository demonstrates a complete and readable compiler front-end suitable for the Compiler Construction Lab project. The implementation is intentionally modular so that future engines, extensions, or bonus features can be added without rewriting the core compiler pipeline.

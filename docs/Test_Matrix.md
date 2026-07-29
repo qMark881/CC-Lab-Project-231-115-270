@@ -31,3 +31,4 @@ This file summarizes the main test programs included in `tests/`.
 | `tests/invalid/logical_type_error.md` | invalid logical expression operands |
 | `tests/invalid/condition_type_error.md` | non-boolean condition detection |
 | `tests/invalid/modulo_type_error.md` | modulo type restriction detection |
+| `tests/invalid/unterminated_comment.md` | unterminated block comment detection |

@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.3 (2026)
+
+Further improved compiler polish and robustness.
+
+Included:
+
+- Standard input support with `-`
+- `--help` and `--version` command-line options
+- Unterminated block comment detection in the lexer
+- Expanded invalid test coverage
+- Updated compiler report and test matrix notes
+- Slightly cleaner runtime completion message
+
 ## v1.2 (2026)
 
 Expanded the compiler package with clearer documentation, better build ergonomics, and stronger test coverage.

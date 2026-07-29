@@ -53,6 +53,9 @@ typedef struct Lexer {
     size_t length;
     size_t pos;
     int line;
+    bool has_pending_error;
+    char *pending_error;
+    int pending_error_line;
 } Lexer;
 
 void lexer_init(Lexer *lexer, const char *source);

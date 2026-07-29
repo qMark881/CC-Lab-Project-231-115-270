@@ -14,6 +14,10 @@ static Token make_token(TokenType type, const char *lexeme, DataType literal_typ
     return tok;
 }
 
+static Token make_invalid_token(const char *message, int line) {
+    return make_token(TOK_INVALID, message, TYPE_ERROR, line);
+}
+
 static char peek(const Lexer *lexer) {
     if (lexer->pos >= lexer->length) return '\0';
     return lexer->source[lexer->pos];
@@ -36,29 +40,44 @@ static void skip_whitespace_and_comments(Lexer *lexer) {
     for (;;) {
         char c = peek(lexer);
         if (c == '\0') return;
+
         if (isspace((unsigned char)c)) {
             advance(lexer);
             continue;
         }
+
         if (c == '/' && peek_next(lexer) == '/') {
             while (peek(lexer) != '\0' && peek(lexer) != '\n') {
                 advance(lexer);
             }
             continue;
         }
+
         if (c == '/' && peek_next(lexer) == '*') {
-            advance(lexer);
-            advance(lexer);
+            int comment_line = lexer->line;
+            bool closed = false;
+            advance(lexer); /* '/' */
+            advance(lexer); /* '*' */
+
             while (peek(lexer) != '\0') {
                 if (peek(lexer) == '*' && peek_next(lexer) == '/') {
                     advance(lexer);
                     advance(lexer);
+                    closed = true;
                     break;
                 }
                 advance(lexer);
             }
+
+            if (!closed) {
+                lexer->has_pending_error = true;
+                lexer->pending_error_line = comment_line;
+                lexer->pending_error = xstrdup("Unterminated block comment");
+                return;
+            }
             continue;
         }
+
         break;
     }
 }
@@ -68,6 +87,9 @@ void lexer_init(Lexer *lexer, const char *source) {
     lexer->length = strlen(lexer->source);
     lexer->pos = 0;
     lexer->line = 1;
+    lexer->has_pending_error = false;
+    lexer->pending_error = NULL;
+    lexer->pending_error_line = 1;
 }
 
 static TokenType keyword_type(const char *text) {
@@ -85,6 +107,17 @@ static TokenType keyword_type(const char *text) {
 
 Token lexer_next(Lexer *lexer) {
     skip_whitespace_and_comments(lexer);
+
+    if (lexer->has_pending_error) {
+        int line = lexer->pending_error_line;
+        char *message = lexer->pending_error;
+        lexer->pending_error = NULL;
+        lexer->has_pending_error = false;
+        Token tok = make_invalid_token(message ? message : "Invalid token", line);
+        free(message);
+        return tok;
+    }
+
     int line = lexer->line;
     char c = peek(lexer);
     if (c == '\0') {
@@ -97,15 +130,18 @@ Token lexer_next(Lexer *lexer) {
         while (isalnum((unsigned char)peek(lexer)) || peek(lexer) == '_') {
             advance(lexer);
         }
+
         size_t len = lexer->pos - start;
         char *text = (char *)xmalloc(len + 1);
         memcpy(text, lexer->source + start, len);
         text[len] = '\0';
+
         TokenType type = keyword_type(text);
         DataType lit_type = TYPE_VOID;
         if (type == TOK_TRUE || type == TOK_FALSE) {
             lit_type = TYPE_BOOL;
         }
+
         Token tok = make_token(type, text, lit_type, line);
         free(text);
         return tok;
@@ -114,9 +150,11 @@ Token lexer_next(Lexer *lexer) {
     if (isdigit((unsigned char)c)) {
         size_t start = lexer->pos;
         bool is_float = false;
+
         while (isdigit((unsigned char)peek(lexer))) {
             advance(lexer);
         }
+
         if (peek(lexer) == '.' && isdigit((unsigned char)peek_next(lexer))) {
             is_float = true;
             advance(lexer);
@@ -124,10 +162,12 @@ Token lexer_next(Lexer *lexer) {
                 advance(lexer);
             }
         }
+
         size_t len = lexer->pos - start;
         char *text = (char *)xmalloc(len + 1);
         memcpy(text, lexer->source + start, len);
         text[len] = '\0';
+
         Token tok = make_token(is_float ? TOK_FLOAT_LITERAL : TOK_INT_LITERAL, text, is_float ? TYPE_FLOAT : TYPE_INT, line);
         free(text);
         return tok;
@@ -186,7 +226,7 @@ Token lexer_next(Lexer *lexer) {
     }
 
     char invalid[2] = { c, '\0' };
-    return make_token(TOK_INVALID, invalid, TYPE_ERROR, line);
+    return make_invalid_token(invalid, line);
 }
 
 void token_free(Token *token) {

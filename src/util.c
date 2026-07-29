@@ -34,20 +34,53 @@ char *xstrdup(const char *s) {
 char *read_entire_file(const char *path) {
     FILE *fp = fopen(path, "rb");
     if (!fp) return NULL;
+
     if (fseek(fp, 0, SEEK_END) != 0) {
         fclose(fp);
         return NULL;
     }
+
     long size = ftell(fp);
     if (size < 0) {
         fclose(fp);
         return NULL;
     }
+
     rewind(fp);
     char *buffer = (char *)xmalloc((size_t)size + 1);
     size_t read_bytes = fread(buffer, 1, (size_t)size, fp);
     buffer[read_bytes] = '\0';
     fclose(fp);
+    return buffer;
+}
+
+char *read_entire_stream(FILE *fp) {
+    if (!fp) return NULL;
+
+    size_t cap = 4096;
+    size_t len = 0;
+    char *buffer = (char *)xmalloc(cap);
+
+    for (;;) {
+        if (cap - len < 1024) {
+            cap *= 2;
+            buffer = (char *)xrealloc(buffer, cap);
+        }
+
+        size_t room = cap - len - 1;
+        size_t read_bytes = fread(buffer + len, 1, room, fp);
+        len += read_bytes;
+
+        if (read_bytes < room) {
+            if (ferror(fp)) {
+                free(buffer);
+                return NULL;
+            }
+            break;
+        }
+    }
+
+    buffer[len] = '\0';
     return buffer;
 }
 
@@ -58,6 +91,7 @@ static char *trim_copy(const char *start, const char *end) {
     while (end > start && (end[-1] == '\n' || end[-1] == '\r' || isspace((unsigned char)end[-1]))) {
         end--;
     }
+
     size_t len = (size_t)(end - start);
     char *out = (char *)xmalloc(len + 1);
     memcpy(out, start, len);
@@ -67,13 +101,16 @@ static char *trim_copy(const char *start, const char *end) {
 
 char *extract_code_block(const char *text) {
     if (!text) return xstrdup("");
+
     const char *f1 = strstr(text, "```");
     if (!f1) return xstrdup(text);
+
     const char *after_f1 = strchr(f1 + 3, '\n');
     if (!after_f1) return xstrdup(text);
     after_f1++;
 
     const char *f2 = strstr(after_f1, "```");
     if (!f2) return xstrdup(text);
+
     return trim_copy(after_f1, f2);
 }

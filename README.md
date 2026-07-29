@@ -41,6 +41,14 @@ or use the `run` target:
 make run FILE=tests/valid/complete_program.md
 ```
 
+You can also read from standard input:
+
+```bash
+./compiler -
+```
+
+and then paste a program followed by EOF.
+
 The compiler accepts plain source files and also Markdown files that contain the program inside a fenced code block.
 
 ## Output
@@ -51,6 +59,13 @@ For valid programs, the compiler prints:
 2. a visual tree view
 3. a readable summary
 4. Three Address Code (TAC)
+5. a final success message
+
+You can also print the compiler version with:
+
+```bash
+./compiler --version
+```
 
 For invalid programs, the compiler reports lexical, syntax, and semantic errors with line numbers wherever possible.
 
