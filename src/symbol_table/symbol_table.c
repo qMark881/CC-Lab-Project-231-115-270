@@ -80,3 +80,42 @@ Symbol *symtab_lookup_any(const SymbolTable *table, const char *name) {
     }
     return NULL;
 }
+
+/* Print the current symbol table showing only active symbols */
+void symtab_print(const SymbolTable *table) {
+    printf("=== Symbol Table (Scope Level: %d) ===\n", table->current_scope);
+    printf("Active Symbols:\n");
+    
+    bool found = false;
+    for (Symbol *sym = table->symbols; sym; sym = sym->next) {
+        if (sym->active) {
+            printf("  - %s : %s (declared at line %d, scope %d)\n", 
+                   sym->name, type_to_string(sym->type), sym->declared_line, sym->scope_level);
+            found = true;
+        }
+    }
+    
+    if (!found) {
+        printf("  (no active symbols)\n");
+    }
+    printf("========================================\n");
+}
+
+/* Print detailed symbol table showing all symbols including inactive ones */
+void symtab_print_detailed(const SymbolTable *table) {
+    printf("=== Detailed Symbol Table (Scope Level: %d) ===\n", table->current_scope);
+    printf("All Symbols:\n");
+    
+    bool found = false;
+    for (Symbol *sym = table->symbols; sym; sym = sym->next) {
+        printf("  - %s : %s (declared at line %d, scope %d) [%s]\n", 
+               sym->name, type_to_string(sym->type), sym->declared_line, sym->scope_level,
+               sym->active ? "ACTIVE" : "INACTIVE");
+        found = true;
+    }
+    
+    if (!found) {
+        printf("  (no symbols)\n");
+    }
+    printf("================================================\n");
+}

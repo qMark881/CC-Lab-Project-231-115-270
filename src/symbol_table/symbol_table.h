@@ -26,5 +26,7 @@ bool symtab_insert(SymbolTable *table, const char *name, DataType type, int line
 Symbol *symtab_lookup_active(const SymbolTable *table, const char *name);
 Symbol *symtab_lookup_any(const SymbolTable *table, const char *name);
 Symbol *symtab_lookup_current_scope(const SymbolTable *table, const char *name);
+void symtab_print(const SymbolTable *table);
+void symtab_print_detailed(const SymbolTable *table);
 
 #endif
