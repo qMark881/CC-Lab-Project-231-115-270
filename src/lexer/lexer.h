@@ -4,65 +4,80 @@
 #include "../common.h"
 #include <stddef.h>
 
+/* Enumeration of all token types recognized by the lexer.
+ * These represent the fundamental lexical units of the language. */
 typedef enum {
-    TOK_EOF = 0,
-    TOK_INT,
-    TOK_FLOAT,
-    TOK_BOOL,
-    TOK_IF,
-    TOK_ELSE,
-    TOK_WHILE,
-    TOK_PRINT,
-    TOK_TRUE,
-    TOK_FALSE,
-    TOK_ID,
-    TOK_INT_LITERAL,
-    TOK_FLOAT_LITERAL,
-    TOK_PLUS,
-    TOK_MINUS,
-    TOK_STAR,
-    TOK_SLASH,
-    TOK_PERCENT,
-    TOK_LT,
-    TOK_GT,
-    TOK_LE,
-    TOK_GE,
-    TOK_EQ,
-    TOK_NEQ,
-    TOK_AND,
-    TOK_OR,
-    TOK_NOT,
-    TOK_ASSIGN,
-    TOK_LPAREN,
-    TOK_RPAREN,
-    TOK_LBRACE,
-    TOK_RBRACE,
-    TOK_SEMI,
-    TOK_INVALID
+    TOK_EOF = 0,          /* End of file marker */
+    TOK_INT,              /* 'int' keyword */
+    TOK_FLOAT,            /* 'float' keyword */
+    TOK_BOOL,             /* 'bool' keyword */
+    TOK_IF,               /* 'if' keyword */
+    TOK_ELSE,             /* 'else' keyword */
+    TOK_WHILE,            /* 'while' keyword */
+    TOK_PRINT,            /* 'print' keyword */
+    TOK_TRUE,             /* 'true' boolean literal */
+    TOK_FALSE,            /* 'false' boolean literal */
+    TOK_ID,               /* Identifier (variable name) */
+    TOK_INT_LITERAL,      /* Integer literal */
+    TOK_FLOAT_LITERAL,    /* Floating-point literal */
+    TOK_PLUS,             /* '+' operator */
+    TOK_MINUS,            /* '-' operator */
+    TOK_STAR,             /* '*' operator */
+    TOK_SLASH,            /* '/' operator */
+    TOK_PERCENT,          /* '%' operator */
+    TOK_LT,               /* '<' operator */
+    TOK_GT,               /* '>' operator */
+    TOK_LE,               /* '<=' operator */
+    TOK_GE,               /* '>=' operator */
+    TOK_EQ,               /* '==' operator */
+    TOK_NEQ,              /* '!=' operator */
+    TOK_AND,              /* '&&' operator */
+    TOK_OR,               /* '||' operator */
+    TOK_NOT,              /* '!' operator */
+    TOK_ASSIGN,           /* '=' assignment operator */
+    TOK_LPAREN,           /* '(' left parenthesis */
+    TOK_RPAREN,           /* ')' right parenthesis */
+    TOK_LBRACE,           /* '{' left brace */
+    TOK_RBRACE,           /* '}' right brace */
+    TOK_SEMI,             /* ';' semicolon */
+    TOK_INVALID           /* Invalid token/error */
 } TokenType;
 
+/* Token structure representing a single lexical unit.
+ * Contains the token type, its text representation, literal type (if applicable),
+ * and the line number where it appears in the source code. */
 typedef struct Token {
-    TokenType type;
-    char *lexeme;
-    DataType literal_type;
-    int line;
+    TokenType type;           /* The type of this token */
+    char *lexeme;             /* The actual text of the token */
+    DataType literal_type;    /* Type of literal if this is a literal token */
+    int line;                 /* Line number where token appears */
 } Token;
 
+/* Lexer structure that maintains the state during lexical analysis.
+ * Tracks position in source code, line/column numbers for error reporting,
+ * and pending error state for deferred error reporting. */
 typedef struct Lexer {
-    const char *source;
-    size_t length;
-    size_t pos;
-    int line;
-    int column;
-    bool has_pending_error;
-    char *pending_error;
-    int pending_error_line;
-    int pending_error_column;
+    const char *source;           /* Source code being lexed */
+    size_t length;                /* Length of source code */
+    size_t pos;                   /* Current position in source */
+    int line;                     /* Current line number */
+    int column;                   /* Current column number */
+    bool has_pending_error;       /* Flag for pending error */
+    char *pending_error;          /* Pending error message */
+    int pending_error_line;       /* Line number of pending error */
+    int pending_error_column;     /* Column number of pending error */
 } Lexer;
 
+/* Initialize the lexer with source code */
 void lexer_init(Lexer *lexer, const char *source);
+
+/* Get the next token from the source code */
 Token lexer_next(Lexer *lexer);
+
+/* Free memory allocated for a token */
 void token_free(Token *token);
+
+/* Get human-readable name for a token type */
 const char *token_type_name(TokenType type);
 
 #endif

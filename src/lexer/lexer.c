@@ -6,6 +6,9 @@
 #include <string.h>
 #include <stdarg.h>
 
+/* Creates a new token with the given type, lexeme, literal type, and line number.
+ * This helper function constructs a Token structure and duplicates the lexeme string
+ * to ensure proper memory management. */
 static Token make_token(TokenType type, const char *lexeme, DataType literal_type, int line) {
     Token tok;
     tok.type = type;
@@ -15,20 +18,29 @@ static Token make_token(TokenType type, const char *lexeme, DataType literal_typ
     return tok;
 }
 
+/* Creates an invalid token with an error message.
+ * Used for reporting lexical errors with descriptive messages. */
 static Token make_invalid_token(const char *message, int line) {
     return make_token(TOK_INVALID, message, TYPE_ERROR, line);
 }
 
+/* Returns the current character without advancing the position.
+ * Returns '\0' if at end of source. */
 static char peek(const Lexer *lexer) {
     if (lexer->pos >= lexer->length) return '\0';
     return lexer->source[lexer->pos];
 }
 
+/* Returns the next character without advancing the position.
+ * Used for looking ahead to detect multi-character tokens. */
 static char peek_next(const Lexer *lexer) {
     if (lexer->pos + 1 >= lexer->length) return '\0';
     return lexer->source[lexer->pos + 1];
 }
 
+/* Advances to the next character in the source code.
+ * Updates line and column tracking for accurate error reporting.
+ * Returns the character that was advanced past. */
 static char advance(Lexer *lexer) {
     char c = peek(lexer);
     if (c == '\0') return c;
@@ -42,16 +54,21 @@ static char advance(Lexer *lexer) {
     return c;
 }
 
+/* Skips whitespace and comments in the source code.
+ * Handles both single-line (//) and multi-line (/* */) comments.
+ * Sets pending error if a block comment is not properly terminated. */
 static void skip_whitespace_and_comments(Lexer *lexer) {
     for (;;) {
         char c = peek(lexer);
         if (c == '\0') return;
 
+        /* Skip whitespace characters */
         if (isspace((unsigned char)c)) {
             advance(lexer);
             continue;
         }
 
+        /* Skip single-line comments */
         if (c == '/' && peek_next(lexer) == '/') {
             while (peek(lexer) != '\0' && peek(lexer) != '\n') {
                 advance(lexer);
@@ -59,6 +76,7 @@ static void skip_whitespace_and_comments(Lexer *lexer) {
             continue;
         }
 
+        /* Skip multi-line comments with proper termination checking */
         if (c == '/' && peek_next(lexer) == '*') {
             int comment_line = lexer->line;
             int comment_column = lexer->column;
@@ -90,6 +108,8 @@ static void skip_whitespace_and_comments(Lexer *lexer) {
     }
 }
 
+/* Initializes the lexer with the given source code.
+ * Sets up the initial position, line, column tracking, and error state. */
 void lexer_init(Lexer *lexer, const char *source) {
     lexer->source = source ? source : "";
     lexer->length = strlen(lexer->source);
@@ -102,6 +122,8 @@ void lexer_init(Lexer *lexer, const char *source) {
     lexer->pending_error_column = 1;
 }
 
+/* Determines if a given identifier text is a keyword.
+ * Returns the corresponding token type for keywords, or TOK_ID for regular identifiers. */
 static TokenType keyword_type(const char *text) {
     if (strcmp(text, "int") == 0) return TOK_INT;
     if (strcmp(text, "float") == 0) return TOK_FLOAT;
@@ -115,9 +137,13 @@ static TokenType keyword_type(const char *text) {
     return TOK_ID;
 }
 
+/* Returns the next token from the source code.
+ * This is the main lexical analysis function that tokenizes the input.
+ * Handles identifiers, keywords, literals, operators, and delimiters. */
 Token lexer_next(Lexer *lexer) {
     skip_whitespace_and_comments(lexer);
 
+    /* Check for pending errors from comment processing */
     if (lexer->has_pending_error) {
         int line = lexer->pending_error_line;
         char *message = lexer->pending_error;
@@ -134,6 +160,7 @@ Token lexer_next(Lexer *lexer) {
         return make_token(TOK_EOF, "EOF", TYPE_VOID, line);
     }
 
+    /* Handle identifiers and keywords */
     if (isalpha((unsigned char)c) || c == '_') {
         size_t start = lexer->pos;
         advance(lexer);
@@ -157,6 +184,7 @@ Token lexer_next(Lexer *lexer) {
         return tok;
     }
 
+    /* Handle numeric literals (integer and float) */
     if (isdigit((unsigned char)c)) {
         size_t start = lexer->pos;
         bool is_float = false;
@@ -183,6 +211,7 @@ Token lexer_next(Lexer *lexer) {
         return tok;
     }
 
+    /* Handle operators and delimiters */
     advance(lexer);
     switch (c) {
         case '+': return make_token(TOK_PLUS, "+", TYPE_VOID, line);
@@ -235,18 +264,23 @@ Token lexer_next(Lexer *lexer) {
             break;
     }
 
+    /* Handle invalid characters */
     char invalid[2] = { c, '\0' };
     char error_msg[64];
     snprintf(error_msg, sizeof(error_msg), "Invalid character '%s' at line %d, column %d", invalid, line, lexer->column);
     return make_invalid_token(error_msg, line);
 }
 
+/* Frees the memory allocated for a token's lexeme.
+ * Should be called when the token is no longer needed. */
 void token_free(Token *token) {
     if (!token) return;
     free(token->lexeme);
     token->lexeme = NULL;
 }
 
+/* Returns a human-readable name for a token type.
+ * Useful for debugging and error reporting. */
 const char *token_type_name(TokenType type) {
     switch (type) {
         case TOK_EOF: return "EOF";
