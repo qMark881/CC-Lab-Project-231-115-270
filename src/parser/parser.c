@@ -6,11 +6,15 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
+/* Advance to the next token by consuming the current token.
+ * Frees the current token and gets the next one from the lexer. */
 static void parser_advance(Parser *parser) {
     token_free(&parser->current);
     parser->current = lexer_next(&parser->lexer);
 }
 
+/* Report a syntax error with formatted message.
+ * Increments the error count and prints the error to stderr. */
 static void parser_error(Parser *parser, int line, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -21,6 +25,9 @@ static void parser_error(Parser *parser, int line, const char *fmt, ...) {
     parser->error_count++;
 }
 
+/* Check if the current token matches the expected type.
+ * If it matches, consume the token and return true.
+ * Otherwise, return false without consuming. */
 static bool parser_match(Parser *parser, TokenType type) {
     if (parser->current.type == type) {
         parser_advance(parser);
@@ -29,6 +36,9 @@ static bool parser_match(Parser *parser, TokenType type) {
     return false;
 }
 
+/* Expect the current token to be of a specific type.
+ * If it matches, consume the token and return true.
+ * Otherwise, report an error with the given message and return false. */
 static bool parser_expect(Parser *parser, TokenType type, const char *message) {
     if (parser_match(parser, type)) {
         return true;
@@ -38,6 +48,8 @@ static bool parser_expect(Parser *parser, TokenType type, const char *message) {
 }
 
 
+/* Convert a token type to the corresponding data type.
+ * Used for type checking and semantic analysis. */
 static DataType token_to_type(TokenType type) {
     switch (type) {
         case TOK_INT: return TYPE_INT;
@@ -49,10 +61,12 @@ static DataType token_to_type(TokenType type) {
 
 static ASTNode *parse_expression(Parser *parser);
 
+/* Duplicate a lexeme string for safe storage in AST nodes. */
 static char *dup_lexeme(const char *s) {
     return xstrdup(s ? s : "");
 }
 
+/* Create a binary expression node with left and right operands. */
 static ASTNode *make_binary(const char *op, ASTNode *left, ASTNode *right, int line) {
     ASTNode *node = ast_create(NODE_BINARY, op, line);
     ast_add_child(node, left);
@@ -60,12 +74,15 @@ static ASTNode *make_binary(const char *op, ASTNode *left, ASTNode *right, int l
     return node;
 }
 
+/* Create a unary expression node with a single operand. */
 static ASTNode *make_unary(const char *op, ASTNode *child, int line) {
     ASTNode *node = ast_create(NODE_UNARY, op, line);
     ast_add_child(node, child);
     return node;
 }
 
+/* Parse primary expressions: literals, identifiers, and parenthesized expressions.
+ * These are the basic building blocks of the language grammar. */
 static ASTNode *parse_primary(Parser *parser) {
     Token tok = parser->current;
     switch (tok.type) {
@@ -116,6 +133,8 @@ static ASTNode *parse_primary(Parser *parser) {
     }
 }
 
+/* Parse unary expressions: operators with single operands (- and !).
+ * Handles right-associative unary operators recursively. */
 static ASTNode *parse_unary(Parser *parser) {
     Token tok = parser->current;
     if (tok.type == TOK_MINUS || tok.type == TOK_NOT) {
@@ -129,6 +148,8 @@ static ASTNode *parse_unary(Parser *parser) {
     return parse_primary(parser);
 }
 
+/* Parse multiplicative expressions: *, /, and % operators.
+ * These operators have higher precedence than additive operators. */
 static ASTNode *parse_multiplicative(Parser *parser) {
     ASTNode *node = parse_unary(parser);
     while (parser->current.type == TOK_STAR || parser->current.type == TOK_SLASH || parser->current.type == TOK_PERCENT) {
@@ -142,6 +163,8 @@ static ASTNode *parse_multiplicative(Parser *parser) {
     return node;
 }
 
+/* Parse additive expressions: + and - operators.
+ * These operators have lower precedence than multiplicative operators. */
 static ASTNode *parse_additive(Parser *parser) {
     ASTNode *node = parse_multiplicative(parser);
     while (parser->current.type == TOK_PLUS || parser->current.type == TOK_MINUS) {
@@ -155,6 +178,8 @@ static ASTNode *parse_additive(Parser *parser) {
     return node;
 }
 
+/* Parse relational expressions: <, >, <=, and >= operators.
+ * These operators have lower precedence than additive operators. */
 static ASTNode *parse_relational(Parser *parser) {
     ASTNode *node = parse_additive(parser);
     while (parser->current.type == TOK_LT || parser->current.type == TOK_GT ||
@@ -169,6 +194,8 @@ static ASTNode *parse_relational(Parser *parser) {
     return node;
 }
 
+/* Parse equality expressions: == and != operators.
+ * These operators have lower precedence than relational operators. */
 static ASTNode *parse_equality(Parser *parser) {
     ASTNode *node = parse_relational(parser);
     while (parser->current.type == TOK_EQ || parser->current.type == TOK_NEQ) {
@@ -182,6 +209,8 @@ static ASTNode *parse_equality(Parser *parser) {
     return node;
 }
 
+/* Parse logical AND expressions: && operator.
+ * This operator has lower precedence than equality operators. */
 static ASTNode *parse_logical_and(Parser *parser) {
     ASTNode *node = parse_equality(parser);
     while (parser->current.type == TOK_AND) {
@@ -195,6 +224,8 @@ static ASTNode *parse_logical_and(Parser *parser) {
     return node;
 }
 
+/* Parse logical OR expressions: || operator.
+ * This operator has lower precedence than logical AND operator. */
 static ASTNode *parse_logical_or(Parser *parser) {
     ASTNode *node = parse_logical_and(parser);
     while (parser->current.type == TOK_OR) {
@@ -208,6 +239,8 @@ static ASTNode *parse_logical_or(Parser *parser) {
     return node;
 }
 
+/* Parse a complete expression.
+ * This is the entry point for expression parsing, handling all operator precedence levels. */
 static ASTNode *parse_expression(Parser *parser) {
     return parse_logical_or(parser);
 }
@@ -216,6 +249,8 @@ static ASTNode *parse_block(Parser *parser);
 
 static ASTNode *parse_statement(Parser *parser);
 
+/* Parse variable declarations with optional initialization.
+ * Handles declarations like: int x; or float y = 3.14; */
 static ASTNode *parse_decl(Parser *parser) {
     Token type_tok = parser->current;
     DataType decl_type = token_to_type(type_tok.type);
@@ -248,6 +283,8 @@ static ASTNode *parse_decl(Parser *parser) {
     return decl;
 }
 
+/* Parse assignment statements: identifier = expression;
+ * Handles variable assignments like: x = 10; */
 static ASTNode *parse_assignment(Parser *parser) {
     Token id_tok = parser->current;
     char *id_name = dup_lexeme(id_tok.lexeme);
@@ -273,6 +310,8 @@ static ASTNode *parse_assignment(Parser *parser) {
     return assign;
 }
 
+/* Parse print statements: print expression;
+ * Handles output statements like: print x; */
 static ASTNode *parse_print(Parser *parser) {
     Token kw = parser->current;
     parser_advance(parser);
@@ -288,6 +327,8 @@ static ASTNode *parse_print(Parser *parser) {
     return node;
 }
 
+/* Parse if and if-else statements.
+ * Handles conditional statements with optional else branch. */
 static ASTNode *parse_if(Parser *parser) {
     Token kw = parser->current;
     parser_advance(parser);
@@ -315,6 +356,8 @@ static ASTNode *parse_if(Parser *parser) {
     return node;
 }
 
+/* Parse while loop statements.
+ * Handles iteration statements with condition checking. */
 static ASTNode *parse_while(Parser *parser) {
     Token kw = parser->current;
     parser_advance(parser);
@@ -336,6 +379,8 @@ static ASTNode *parse_while(Parser *parser) {
     return node;
 }
 
+/* Parse a block of statements enclosed in braces.
+ * Creates a block node containing multiple statements. */
 static ASTNode *parse_block(Parser *parser) {
     int line = parser->current.line;
     ASTNode *block = ast_create(NODE_BLOCK, "block", line);
@@ -369,6 +414,8 @@ static ASTNode *parse_block(Parser *parser) {
     return block;
 }
 
+/* Parse a single statement based on the current token type.
+ * Dispatches to the appropriate parsing function for each statement type. */
 static ASTNode *parse_statement(Parser *parser) {
     switch (parser->current.type) {
         case TOK_INT:
@@ -408,16 +455,21 @@ static ASTNode *parse_statement(Parser *parser) {
     }
 }
 
+/* Initialize the parser with source code.
+ * Sets up the lexer and gets the first token. */
 void parser_init(Parser *parser, const char *source) {
     lexer_init(&parser->lexer, source);
     parser->current = lexer_next(&parser->lexer);
     parser->error_count = 0;
 }
 
+/* Clean up parser resources by freeing the current token. */
 void parser_destroy(Parser *parser) {
     token_free(&parser->current);
 }
 
+/* Parse the entire program by parsing statements until EOF.
+ * Returns the root of the AST representing the complete program. */
 ASTNode *parse_program(Parser *parser) {
     ASTNode *program = ast_create(NODE_PROGRAM, "program", 1);
     while (parser->current.type != TOK_EOF) {
