@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+/* Report a semantic error with formatted message.
+ * Increments the error count and prints the error to stderr. */
 static void semantic_error(SemanticContext *ctx, int line, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -15,12 +17,16 @@ static void semantic_error(SemanticContext *ctx, int line, const char *fmt, ...)
     ctx->error_count++;
 }
 
+/* Initialize the semantic analysis context.
+ * Creates an empty symbol table and initializes error tracking. */
 void semantic_init(SemanticContext *ctx) {
     symtab_init(&ctx->table);
     ctx->issues = NULL;
     ctx->error_count = 0;
 }
 
+/* Clean up semantic analysis resources.
+ * Destroys the symbol table and frees all reported issues. */
 void semantic_destroy(SemanticContext *ctx) {
     symtab_destroy(&ctx->table);
     ReportedIssue *issue = ctx->issues;
@@ -36,6 +42,7 @@ void semantic_destroy(SemanticContext *ctx) {
 
 static DataType analyze_expr(ASTNode *node, SemanticContext *ctx);
 
+/* Check if an issue has already been reported to avoid duplicate error messages. */
 static bool issue_already_reported(SemanticContext *ctx, int kind, const char *name) {
     for (ReportedIssue *issue = ctx->issues; issue; issue = issue->next) {
         if (issue->kind == kind && strcmp(issue->name, name) == 0) {
@@ -45,6 +52,7 @@ static bool issue_already_reported(SemanticContext *ctx, int kind, const char *n
     return false;
 }
 
+/* Remember a reported issue to avoid duplicate error messages. */
 static void remember_issue(SemanticContext *ctx, int kind, const char *name) {
     ReportedIssue *issue = (ReportedIssue *)xmalloc(sizeof(ReportedIssue));
     issue->name = xstrdup(name);
@@ -53,6 +61,8 @@ static void remember_issue(SemanticContext *ctx, int kind, const char *name) {
     ctx->issues = issue;
 }
 
+/* Look up an identifier in the symbol table.
+ * Returns the variable's type or reports an error if not found or out of scope. */
 static DataType lookup_identifier(ASTNode *node, SemanticContext *ctx) {
     Symbol *sym = symtab_lookup_active(&ctx->table, node->text);
     if (sym) {
@@ -75,6 +85,8 @@ static DataType lookup_identifier(ASTNode *node, SemanticContext *ctx) {
     return TYPE_ERROR;
 }
 
+/* Analyze binary expressions for type checking.
+ * Performs type checking on both operands and determines the result type. */
 static DataType analyze_binary(ASTNode *node, SemanticContext *ctx) {
     DataType left = analyze_expr(node->children[0], ctx);
     DataType right = analyze_expr(node->children[1], ctx);
@@ -132,6 +144,8 @@ static DataType analyze_binary(ASTNode *node, SemanticContext *ctx) {
     return TYPE_ERROR;
 }
 
+/* Analyze unary expressions for type checking.
+ * Performs type checking on the operand and determines the result type. */
 static DataType analyze_unary(ASTNode *node, SemanticContext *ctx) {
     DataType operand = analyze_expr(node->children[0], ctx);
     const char *op = node->text;
@@ -158,6 +172,8 @@ static DataType analyze_unary(ASTNode *node, SemanticContext *ctx) {
     return TYPE_ERROR;
 }
 
+/* Analyze an expression node and determine its type.
+ * Dispatches to the appropriate analysis function based on node type. */
 static DataType analyze_expr(ASTNode *node, SemanticContext *ctx) {
     if (!node) return TYPE_ERROR;
     switch (node->kind) {
@@ -186,6 +202,8 @@ static DataType analyze_expr(ASTNode *node, SemanticContext *ctx) {
 
 static void analyze_stmt(ASTNode *node, SemanticContext *ctx);
 
+/* Analyze a block of statements with a new scope.
+ * Enters a new scope, analyzes all statements, then exits the scope. */
 static void analyze_block(ASTNode *node, SemanticContext *ctx) {
     symtab_enter_scope(&ctx->table);
     for (int i = 0; i < node->child_count; ++i) {
@@ -194,6 +212,8 @@ static void analyze_block(ASTNode *node, SemanticContext *ctx) {
     symtab_exit_scope(&ctx->table);
 }
 
+/* Analyze a statement node based on its type.
+ * Dispatches to the appropriate analysis function for each statement type. */
 static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
     if (!node) return;
 
@@ -209,6 +229,7 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
             break;
 
         case NODE_DECL: {
+            /* Analyze variable declarations with type checking of initializers */
             if (node->child_count < 1 || !node->children[0] || node->children[0]->kind != NODE_IDENTIFIER) {
                 semantic_error(ctx, node->line, "Malformed declaration");
                 break;
@@ -235,6 +256,7 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
         }
 
         case NODE_ASSIGN: {
+            /* Analyze assignment statements with type checking */
             if (node->child_count != 2 || !node->children[0] || node->children[0]->kind != NODE_IDENTIFIER) {
                 semantic_error(ctx, node->line, "Malformed assignment");
                 break;
@@ -270,6 +292,7 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
         }
 
         case NODE_IF: {
+            /* Analyze if statements with boolean condition checking */
             if (node->child_count < 2) {
                 semantic_error(ctx, node->line, "Malformed if statement");
                 break;
@@ -286,6 +309,7 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
         }
 
         case NODE_WHILE: {
+            /* Analyze while statements with boolean condition checking */
             if (node->child_count < 2) {
                 semantic_error(ctx, node->line, "Malformed while statement");
                 break;
@@ -299,6 +323,7 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
         }
 
         case NODE_PRINT:
+            /* Analyze print statements by checking the expression type */
             if (node->child_count != 1) {
                 semantic_error(ctx, node->line, "Malformed print statement");
                 break;
@@ -311,6 +336,8 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
     }
 }
 
+/* Perform semantic analysis on the entire AST.
+ * This is the main entry point for semantic analysis. */
 void semantic_analyze(ASTNode *root, SemanticContext *ctx) {
     analyze_stmt(root, ctx);
 }
