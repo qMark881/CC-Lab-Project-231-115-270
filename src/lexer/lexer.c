@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 static Token make_token(TokenType type, const char *lexeme, DataType literal_type, int line) {
     Token tok;
@@ -32,7 +33,12 @@ static char advance(Lexer *lexer) {
     char c = peek(lexer);
     if (c == '\0') return c;
     lexer->pos++;
-    if (c == '\n') lexer->line++;
+    if (c == '\n') {
+        lexer->line++;
+        lexer->column = 1;
+    } else {
+        lexer->column++;
+    }
     return c;
 }
 
@@ -55,6 +61,7 @@ static void skip_whitespace_and_comments(Lexer *lexer) {
 
         if (c == '/' && peek_next(lexer) == '*') {
             int comment_line = lexer->line;
+            int comment_column = lexer->column;
             bool closed = false;
             advance(lexer); /* '/' */
             advance(lexer); /* '*' */
@@ -72,6 +79,7 @@ static void skip_whitespace_and_comments(Lexer *lexer) {
             if (!closed) {
                 lexer->has_pending_error = true;
                 lexer->pending_error_line = comment_line;
+                lexer->pending_error_column = comment_column;
                 lexer->pending_error = xstrdup("Unterminated block comment");
                 return;
             }
@@ -87,9 +95,11 @@ void lexer_init(Lexer *lexer, const char *source) {
     lexer->length = strlen(lexer->source);
     lexer->pos = 0;
     lexer->line = 1;
+    lexer->column = 1;
     lexer->has_pending_error = false;
     lexer->pending_error = NULL;
     lexer->pending_error_line = 1;
+    lexer->pending_error_column = 1;
 }
 
 static TokenType keyword_type(const char *text) {
@@ -226,7 +236,9 @@ Token lexer_next(Lexer *lexer) {
     }
 
     char invalid[2] = { c, '\0' };
-    return make_invalid_token(invalid, line);
+    char error_msg[64];
+    snprintf(error_msg, sizeof(error_msg), "Invalid character '%s' at line %d, column %d", invalid, line, lexer->column);
+    return make_invalid_token(error_msg, line);
 }
 
 void token_free(Token *token) {
