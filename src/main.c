@@ -461,6 +461,13 @@ int main(int argc, char **argv) {
 
     if (parser_errors > 0) {
         fprintf(stderr, "\nCompilation stopped due to syntax/lexical errors.\n");
+        
+        /* Show error context for first error if verbose */
+        if (verbose_mode && source) {
+            fprintf(stderr, "\nError context:\n");
+            print_error_context(source, parser.current.line, 2);
+        }
+        
         ast_free(root);
         free(source);
         return EXIT_FAILURE;
@@ -543,6 +550,13 @@ int main(int argc, char **argv) {
 
     if (semantic_errors > 0) {
         fprintf(stderr, "\nCompilation stopped due to semantic errors.\n");
+        
+        /* Show error context if verbose */
+        if (verbose_mode && source) {
+            fprintf(stderr, "\nError context:\n");
+            print_error_context(source, 1, 2);
+        }
+        
         semantic_destroy(&sem);
         ast_free(root);
         free(source);

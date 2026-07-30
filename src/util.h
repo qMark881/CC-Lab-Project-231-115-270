@@ -16,4 +16,8 @@ size_t get_total_memory_allocated(void);
 size_t get_peak_memory_usage(void);
 void reset_memory_tracking(void);
 
+/* Error context display functions */
+char *get_error_context(const char *source, int error_line, int context_lines);
+void print_error_context(const char *source, int error_line, int context_lines);
+
 #endif
