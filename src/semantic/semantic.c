@@ -27,6 +27,8 @@ void semantic_init(SemanticContext *ctx) {
     ctx->issues = NULL;
     ctx->error_count = 0;
     ctx->last_error_code = ERR_NONE;
+    ctx->warning_count = 0;
+    ctx->last_warning_code = WARN_NONE;
 }
 
 /* Clean up semantic analysis resources.
@@ -198,7 +200,6 @@ static DataType analyze_expr(ASTNode *node, SemanticContext *ctx) {
         case NODE_IF:
         case NODE_WHILE:
         case NODE_PRINT:
-        case NODE_DECL:
         default:
             return TYPE_ERROR;
     }
@@ -210,8 +211,6 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx);
  * Enters a new scope, analyzes all statements, then exits the scope. */
 static void analyze_block(ASTNode *node, SemanticContext *ctx) {
     symtab_enter_scope(&ctx->table);
-    /* Debug: Print symbol table after entering scope */
-    symtab_print(&ctx->table);
     for (int i = 0; i < node->child_count; ++i) {
         analyze_stmt(node->children[i], ctx);
     }
@@ -246,6 +245,13 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
                 semantic_error(ctx, node->line, ERR_SEMANTIC_REDECLARATION, "Redeclaration of variable '%s'", name);
                 break;
             }
+            
+            /* Issue warning for declaration without initialization */
+            if (node->child_count < 2) {
+                semantic_warning(ctx, node->line, WARN_UNUSED_DECLARATION, 
+                              "Variable '%s' declared without initialization", name);
+            }
+            
             if (node->child_count > 1) {
                 DataType init_type = analyze_expr(node->children[1], ctx);
                 if (!assignment_compatible(declared, init_type)) {
@@ -528,4 +534,30 @@ static void apply_constant_folding(ASTNode *node) {
 void semantic_optimize_constant_folding(ASTNode *root) {
     if (!root) return;
     apply_constant_folding(root);
+}
+
+/* Issue a warning for non-critical issues.
+ * Similar to errors but doesn't stop compilation. */
+void semantic_warning(SemanticContext *ctx, int line, WarningCode code, const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    fprintf(stderr, "[%s] Warning: ", warning_code_to_string(code));
+    vfprintf(stderr, fmt, args);
+    fprintf(stderr, " at line %d: %s\n", line, warning_code_description(code));
+    va_end(args);
+    ctx->warning_count++;
+    ctx->last_warning_code = code;
+}
+
+/* Print all warnings accumulated during analysis */
+void semantic_print_warnings(SemanticContext *ctx) {
+    if (ctx->warning_count == 0) {
+        printf("No warnings generated during compilation.\n");
+        return;
+    }
+    
+    printf("=== Compilation Warnings ===\n");
+    printf("Total warnings: %d\n", ctx->warning_count);
+    printf("Last warning code: %s\n", warning_code_to_string(ctx->last_warning_code));
+    printf("===========================\n");
 }

@@ -19,6 +19,8 @@ typedef struct SemanticContext {
     ReportedIssue *issues;            /* Linked list of semantic issues found */
     int error_count;                  /* Total number of semantic errors encountered */
     ErrorCode last_error_code;        /* Last error code encountered */
+    int warning_count;                /* Total number of warnings issued */
+    ErrorCode last_warning_code;      /* Last warning code encountered */
 } SemanticContext;
 
 /* Initialize the semantic analysis context with an empty symbol table. */
@@ -34,5 +36,11 @@ void semantic_analyze(ASTNode *root, SemanticContext *ctx);
 /* Perform constant folding optimization on the AST.
  * Evaluates constant expressions at compile time. */
 void semantic_optimize_constant_folding(ASTNode *root);
+
+/* Issue a warning for non-critical issues */
+void semantic_warning(SemanticContext *ctx, int line, WarningCode code, const char *fmt, ...);
+
+/* Print all warnings accumulated during analysis */
+void semantic_print_warnings(SemanticContext *ctx);
 
 #endif

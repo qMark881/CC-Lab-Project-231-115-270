@@ -36,6 +36,42 @@ typedef enum {
     ERR_SEMANTIC_ASSIGNMENT_INCOMPATIBLE = 3009
 } ErrorCode;
 
+/* Warning codes for non-critical issues */
+typedef enum {
+    WARN_NONE = 0,
+    WARN_UNUSED_VARIABLE = 4000,
+    WARN_UNUSED_DECLARATION = 4001,
+    WARN_IMPLICIT_CONVERSION = 4002,
+    WARN_STYLE_ISSUE = 4003,
+    WARN_DEAD_CODE = 4004
+} WarningCode;
+
+/* Convert warning code to string representation */
+static inline const char *warning_code_to_string(WarningCode code) {
+    switch (code) {
+        case WARN_NONE: return "WARN_NONE";
+        case WARN_UNUSED_VARIABLE: return "WARN_UNUSED_VARIABLE";
+        case WARN_UNUSED_DECLARATION: return "WARN_UNUSED_DECLARATION";
+        case WARN_IMPLICIT_CONVERSION: return "WARN_IMPLICIT_CONVERSION";
+        case WARN_STYLE_ISSUE: return "WARN_STYLE_ISSUE";
+        case WARN_DEAD_CODE: return "WARN_DEAD_CODE";
+        default: return "WARN_UNKNOWN";
+    }
+}
+
+/* Get human-readable description for warning code */
+static inline const char *warning_code_description(WarningCode code) {
+    switch (code) {
+        case WARN_NONE: return "No warning";
+        case WARN_UNUSED_VARIABLE: return "Variable declared but never used";
+        case WARN_UNUSED_DECLARATION: return "Declaration without initialization";
+        case WARN_IMPLICIT_CONVERSION: return "Implicit type conversion";
+        case WARN_STYLE_ISSUE: return "Code style suggestion";
+        case WARN_DEAD_CODE: return "Code that will never be executed";
+        default: return "Unknown warning";
+    }
+}
+
 /* Compilation statistics structure */
 typedef struct {
     int total_tokens;              /* Total number of tokens generated */
@@ -49,6 +85,7 @@ typedef struct {
     int lexical_errors;           /* Number of lexical errors */
     int syntax_errors;            /* Number of syntax errors */
     int semantic_errors;          /* Number of semantic errors */
+    int warning_count;             /* Number of warnings issued */
     double total_time;            /* Total compilation time in seconds */
     double lexical_time;          /* Lexical analysis time */
     double syntax_time;           /* Syntax analysis time */
@@ -70,6 +107,7 @@ static inline void stats_init(CompilationStats *stats) {
     stats->lexical_errors = 0;
     stats->syntax_errors = 0;
     stats->semantic_errors = 0;
+    stats->warning_count = 0;
     stats->total_time = 0.0;
     stats->lexical_time = 0.0;
     stats->syntax_time = 0.0;
@@ -96,6 +134,7 @@ static inline void stats_print(const CompilationStats *stats) {
     printf("  Symbols declared: %d\n", stats->total_symbols);
     printf("  Scopes entered: %d\n", stats->total_scopes);
     printf("  Semantic errors: %d\n", stats->semantic_errors);
+    printf("  Warnings: %d\n", stats->warning_count);
     printf("  Time: %.3f seconds\n", stats->semantic_time);
     printf("\nOptimization:\n");
     printf("  Constant folds: %d\n", stats->constant_folds);

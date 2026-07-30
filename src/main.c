@@ -282,10 +282,17 @@ int main(int argc, char **argv) {
     
     int semantic_errors = sem.error_count;
     compilation_stats.semantic_errors = semantic_errors;
+    compilation_stats.warning_count = sem.warning_count;
 
     if (verbose_mode) {
         printf("Semantic analysis completed. Semantic errors: %d\n", semantic_errors);
         printf("Semantic analysis time: %.3f seconds\n", compilation_stats.semantic_time);
+        
+        /* Print warnings if any */
+        if (sem.warning_count > 0) {
+            printf("Warnings generated: %d\n", sem.warning_count);
+            semantic_print_warnings(&sem);
+        }
     }
 
     /* Apply constant folding optimization if no semantic errors */
