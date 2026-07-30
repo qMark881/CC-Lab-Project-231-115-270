@@ -37,6 +37,7 @@ ASTNode *ast_create(NodeKind kind, const char *text, int line) {
     node->child_count = 0;
     node->child_cap = 0;
     node->children = NULL;
+    node->comment = NULL;
     return node;
 }
 
@@ -60,6 +61,15 @@ ASTNode *ast_make_literal(const char *text, DataType type, int line) {
 
 ASTNode *ast_make_identifier(const char *name, int line) {
     return ast_create(NODE_IDENTIFIER, name, line);
+}
+
+/* Set a comment for an AST node */
+void ast_set_comment(ASTNode *node, const char *comment) {
+    if (!node) return;
+    if (node->comment) {
+        free(node->comment);
+    }
+    node->comment = xstrdup(comment);
 }
 
 static void print_node_label(const ASTNode *node) {
@@ -425,5 +435,6 @@ void ast_free(ASTNode *node) {
     }
     free(node->children);
     free(node->text);
+    free(node->comment);
     free(node);
 }

@@ -68,11 +68,27 @@ static void skip_whitespace_and_comments(Lexer *lexer) {
             continue;
         }
 
-        /* Skip single-line comments */
+        /* Skip single-line comments and capture them */
         if (c == '/' && peek_next(lexer) == '/') {
+            advance(lexer); /* '/' */
+            advance(lexer); /* '/' */
+            
+            /* Capture the comment text */
+            size_t comment_start = lexer->pos;
             while (peek(lexer) != '\0' && peek(lexer) != '\n') {
                 advance(lexer);
             }
+            
+            /* Store the comment */
+            if (lexer->last_comment) {
+                free(lexer->last_comment);
+            }
+            size_t comment_len = lexer->pos - comment_start;
+            lexer->last_comment = (char *)xmalloc(comment_len + 1);
+            memcpy(lexer->last_comment, &lexer->source[comment_start], comment_len);
+            lexer->last_comment[comment_len] = '\0';
+            lexer->last_comment_line = lexer->line;
+            
             continue;
         }
 
@@ -126,6 +142,8 @@ void lexer_init(Lexer *lexer, const char *source) {
     lexer->pending_error_line = 1;
     lexer->pending_error_column = 1;
     lexer->pending_error_code = ERR_NONE;
+    lexer->last_comment = NULL;
+    lexer->last_comment_line = 0;
 }
 
 /* Determines if a given identifier text is a keyword.
@@ -328,4 +346,23 @@ const char *token_type_name(TokenType type) {
         case TOK_INVALID: return "invalid";
         default: return "unknown";
     }
+}
+
+/* Get the last comment encountered during lexing */
+const char *lexer_get_last_comment(Lexer *lexer) {
+    return lexer->last_comment ? lexer->last_comment : "";
+}
+
+/* Get the line number of the last comment */
+int lexer_get_last_comment_line(Lexer *lexer) {
+    return lexer->last_comment_line;
+}
+
+/* Clear the last comment (after it's been used) */
+void lexer_clear_last_comment(Lexer *lexer) {
+    if (lexer->last_comment) {
+        free(lexer->last_comment);
+        lexer->last_comment = NULL;
+    }
+    lexer->last_comment_line = 0;
 }

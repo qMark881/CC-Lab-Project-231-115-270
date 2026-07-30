@@ -26,12 +26,14 @@ typedef struct ASTNode {
     int child_count;
     int child_cap;
     struct ASTNode **children;
+    char *comment;                /* Associated comment for this node */
 } ASTNode;
 
 ASTNode *ast_create(NodeKind kind, const char *text, int line);
 ASTNode *ast_add_child(ASTNode *parent, ASTNode *child);
 ASTNode *ast_make_literal(const char *text, DataType type, int line);
 ASTNode *ast_make_identifier(const char *name, int line);
+void ast_set_comment(ASTNode *node, const char *comment);
 void ast_print(const ASTNode *node, int indent);
 void ast_print_visual(const ASTNode *node, const char *prefix, bool is_last);
 void ast_print_expression(const ASTNode *node);

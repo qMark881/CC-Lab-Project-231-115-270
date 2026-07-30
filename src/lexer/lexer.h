@@ -67,6 +67,8 @@ typedef struct Lexer {
     int pending_error_line;       /* Line number of pending error */
     int pending_error_column;     /* Column number of pending error */
     ErrorCode pending_error_code;  /* Error code for pending error */
+    char *last_comment;           /* Last comment encountered */
+    int last_comment_line;         /* Line number of last comment */
 } Lexer;
 
 /* Initialize the lexer with source code */
@@ -80,5 +82,14 @@ void token_free(Token *token);
 
 /* Get human-readable name for a token type */
 const char *token_type_name(TokenType type);
+
+/* Get the last comment encountered during lexing */
+const char *lexer_get_last_comment(Lexer *lexer);
+
+/* Get the line number of the last comment */
+int lexer_get_last_comment_line(Lexer *lexer);
+
+/* Clear the last comment (after it's been used) */
+void lexer_clear_last_comment(Lexer *lexer);
 
 #endif
