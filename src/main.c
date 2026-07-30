@@ -397,6 +397,19 @@ int main(int argc, char **argv) {
         printf("Semantic analysis completed. Semantic errors: %d\n", semantic_errors);
         printf("Semantic analysis time: %.3f seconds\n", compilation_stats.semantic_time);
         
+        /* Check for symbol conflicts */
+        printf("Checking for symbol conflicts...\n");
+        SymbolConflict conflicts[100];
+        int conflict_count = symtab_find_conflicts(&sem.table, conflicts, 100);
+        compilation_stats.symbol_conflicts = conflict_count;
+        
+        if (conflict_count > 0) {
+            printf("Symbol conflicts detected: %d\n", conflict_count);
+            symtab_print_conflicts(conflicts, conflict_count);
+        } else {
+            printf("No symbol conflicts detected.\n");
+        }
+        
         /* Print warnings if any */
         if (sem.warning_count > 0) {
             printf("Warnings generated: %d\n", sem.warning_count);

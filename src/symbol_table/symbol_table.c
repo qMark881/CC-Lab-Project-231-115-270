@@ -119,3 +119,62 @@ void symtab_print_detailed(const SymbolTable *table) {
     }
     printf("================================================\n");
 }
+
+/* Find symbol conflicts (variable shadowing) in the symbol table */
+int symtab_find_conflicts(const SymbolTable *table, SymbolConflict *conflicts, int max_conflicts) {
+    int conflict_count = 0;
+    
+    for (Symbol *inner = table->symbols; inner && conflict_count < max_conflicts; inner = inner->next) {
+        if (!inner->active) continue;
+        
+        /* Look for symbols with the same name in outer scopes */
+        for (Symbol *outer = table->symbols; outer && conflict_count < max_conflicts; outer = outer->next) {
+            if (outer == inner) continue;
+            if (!outer->active) continue;
+            
+            /* Check if same name and different scope levels (shadowing) */
+            if (strcmp(inner->name, outer->name) == 0 && 
+                inner->scope_level != outer->scope_level) {
+                
+                /* Determine which is outer and which is inner */
+                Symbol *outer_sym = (outer->scope_level < inner->scope_level) ? outer : inner;
+                Symbol *inner_sym = (outer->scope_level < inner->scope_level) ? inner : outer;
+                
+                conflicts[conflict_count].symbol_name = xstrdup(inner_sym->name);
+                conflicts[conflict_count].outer_scope_line = outer_sym->declared_line;
+                conflicts[conflict_count].inner_scope_line = inner_sym->declared_line;
+                conflicts[conflict_count].outer_type = outer_sym->type;
+                conflicts[conflict_count].inner_type = inner_sym->type;
+                
+                conflict_count++;
+            }
+        }
+    }
+    
+    return conflict_count;
+}
+
+/* Print symbol conflict information */
+void symtab_print_conflicts(const SymbolConflict *conflicts, int count) {
+    if (count == 0) {
+        printf("No symbol conflicts detected.\n");
+        return;
+    }
+    
+    printf("=== Symbol Conflicts Detected ===\n");
+    printf("Total conflicts: %d\n", count);
+    printf("\n");
+    
+    for (int i = 0; i < count; i++) {
+        printf("Conflict %d:\n", i + 1);
+        printf("  Symbol: '%s'\n", conflicts[i].symbol_name);
+        printf("  Outer declaration: line %d (type: %s)\n", 
+               conflicts[i].outer_scope_line, type_to_string(conflicts[i].outer_type));
+        printf("  Inner declaration: line %d (type: %s)\n", 
+               conflicts[i].inner_scope_line, type_to_string(conflicts[i].inner_type));
+        printf("  Issue: Variable shadowing detected\n");
+        printf("\n");
+    }
+    
+    printf("=================================\n");
+}

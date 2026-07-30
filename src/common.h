@@ -86,6 +86,7 @@ typedef struct {
     int syntax_errors;            /* Number of syntax errors */
     int semantic_errors;          /* Number of semantic errors */
     int warning_count;             /* Number of warnings issued */
+    int symbol_conflicts;          /* Number of symbol conflicts detected */
     double total_time;            /* Total compilation time in seconds */
     double lexical_time;          /* Lexical analysis time */
     double syntax_time;           /* Syntax analysis time */
@@ -110,6 +111,7 @@ static inline void stats_init(CompilationStats *stats) {
     stats->syntax_errors = 0;
     stats->semantic_errors = 0;
     stats->warning_count = 0;
+    stats->symbol_conflicts = 0;
     stats->total_time = 0.0;
     stats->lexical_time = 0.0;
     stats->syntax_time = 0.0;
@@ -140,6 +142,7 @@ static inline void stats_print(const CompilationStats *stats) {
     printf("  Scopes entered: %d\n", stats->total_scopes);
     printf("  Semantic errors: %d\n", stats->semantic_errors);
     printf("  Warnings: %d\n", stats->warning_count);
+    printf("  Symbol conflicts: %d\n", stats->symbol_conflicts);
     printf("  Time: %.3f seconds\n", stats->semantic_time);
     printf("\nOptimization:\n");
     printf("  Constant folds: %d\n", stats->constant_folds);
@@ -175,6 +178,7 @@ static inline void stats_print_json(const CompilationStats *stats) {
     printf("    \"scopes\": %d,\n", stats->total_scopes);
     printf("    \"errors\": %d,\n", stats->semantic_errors);
     printf("    \"warnings\": %d,\n", stats->warning_count);
+    printf("    \"conflicts\": %d,\n", stats->symbol_conflicts);
     printf("    \"time\": %.3f\n", stats->semantic_time);
     printf("  },\n");
     printf("  \"optimization\": {\n");
@@ -210,6 +214,7 @@ static inline void stats_print_csv(const CompilationStats *stats) {
     printf("semantic_scopes,%d\n", stats->total_scopes);
     printf("semantic_errors,%d\n", stats->semantic_errors);
     printf("semantic_warnings,%d\n", stats->warning_count);
+    printf("semantic_conflicts,%d\n", stats->symbol_conflicts);
     printf("semantic_time,%.3f\n", stats->semantic_time);
     printf("optimization_folds,%d\n", stats->constant_folds);
     printf("optimization_time,%.3f\n", stats->optimization_time);
