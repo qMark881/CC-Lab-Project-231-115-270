@@ -16,6 +16,8 @@ static bool verbose_mode = false;
 static char *output_file = NULL;
 static bool show_stats = false;
 static bool format_source = false;
+static bool json_output = false;
+static bool csv_output = false;
 static CompilationStats compilation_stats;
 
 static void print_usage(const char *prog) {
@@ -27,6 +29,8 @@ static void print_usage(const char *prog) {
     fprintf(stderr, "  --output, -o <file> Specify output file for compilation results\n");
     fprintf(stderr, "  --stats, -S        Print compilation statistics\n");
     fprintf(stderr, "  --format, -F       Format and pretty-print source code\n");
+    fprintf(stderr, "  --json, -J         Output statistics in JSON format\n");
+    fprintf(stderr, "  --csv, -C          Output statistics in CSV format\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "The compiler accepts plain source files and Markdown files with a fenced C code block.\n");
     fprintf(stderr, "Use '-' to read source from standard input.\n");
@@ -279,6 +283,16 @@ int main(int argc, char **argv) {
             source_arg = i + 1;
             continue;
         }
+        if (strcmp(argv[i], "--json") == 0 || strcmp(argv[i], "-J") == 0) {
+            json_output = true;
+            source_arg = i + 1;
+            continue;
+        }
+        if (strcmp(argv[i], "--csv") == 0 || strcmp(argv[i], "-C") == 0) {
+            csv_output = true;
+            source_arg = i + 1;
+            continue;
+        }
         if (argv[i][0] != '-') {
             source_arg = i;
             break;
@@ -497,7 +511,13 @@ int main(int argc, char **argv) {
     
     /* Print statistics if requested */
     if (show_stats) {
-        stats_print(&compilation_stats);
+        if (json_output) {
+            stats_print_json(&compilation_stats);
+        } else if (csv_output) {
+            stats_print_csv(&compilation_stats);
+        } else {
+            stats_print(&compilation_stats);
+        }
     }
 
     tac_free(&tac);
@@ -508,6 +528,14 @@ int main(int argc, char **argv) {
     /* Calculate total compilation time */
     clock_t end_time = clock();
     compilation_stats.total_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+    
+    /* Calculate performance metrics */
+    if (compilation_stats.source_characters > 0 && compilation_stats.total_time > 0) {
+        compilation_stats.parsing_speed = (double)compilation_stats.source_characters / compilation_stats.total_time;
+    }
+    if (compilation_stats.total_tac_instructions > 0 && compilation_stats.codegen_time > 0) {
+        compilation_stats.codegen_speed = (double)compilation_stats.total_tac_instructions / compilation_stats.codegen_time;
+    }
     
     return EXIT_SUCCESS;
 }

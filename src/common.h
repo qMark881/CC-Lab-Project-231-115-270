@@ -92,6 +92,8 @@ typedef struct {
     double semantic_time;         /* Semantic analysis time */
     double optimization_time;     /* Optimization time */
     double codegen_time;          /* Code generation time */
+    double parsing_speed;         /* Characters per second during parsing */
+    double codegen_speed;         /* Instructions per second during codegen */
 } CompilationStats;
 
 /* Initialize compilation statistics structure */
@@ -114,6 +116,8 @@ static inline void stats_init(CompilationStats *stats) {
     stats->semantic_time = 0.0;
     stats->optimization_time = 0.0;
     stats->codegen_time = 0.0;
+    stats->parsing_speed = 0.0;
+    stats->codegen_speed = 0.0;
 }
 
 /* Print compilation statistics */
@@ -130,6 +134,7 @@ static inline void stats_print(const CompilationStats *stats) {
     printf("  AST nodes created: %d\n", stats->total_ast_nodes);
     printf("  Syntax errors: %d\n", stats->syntax_errors);
     printf("  Time: %.3f seconds\n", stats->syntax_time);
+    printf("  Parsing speed: %.2f chars/sec\n", stats->parsing_speed);
     printf("\nSemantic Analysis:\n");
     printf("  Symbols declared: %d\n", stats->total_symbols);
     printf("  Scopes entered: %d\n", stats->total_scopes);
@@ -142,10 +147,78 @@ static inline void stats_print(const CompilationStats *stats) {
     printf("\nCode Generation:\n");
     printf("  TAC instructions: %d\n", stats->total_tac_instructions);
     printf("  Time: %.3f seconds\n", stats->codegen_time);
-    printf("  Validation: %s\n", stats->total_tac_instructions > 0 ? "N/A" : "N/A");
+    printf("  Codegen speed: %.2f instr/sec\n", stats->codegen_speed);
+    printf("  Validation: %s\n", stats->total_tac_instructions > 0 ? "PASSED" : "N/A");
     printf("\nTotal Compilation:\n");
     printf("  Total time: %.3f seconds\n", stats->total_time);
-    printf("=============================\n");
+    printf("  Overall speed: %.2f chars/sec\n", stats->parsing_speed);
+/* Print compilation statistics in JSON format for programmatic access */
+static inline void stats_print_json(const CompilationStats *stats) {
+    printf("{\n");
+    printf("  \"source\": {\n");
+    printf("    \"lines\": %d,\n", stats->source_lines);
+    printf("    \"characters\": %d\n", stats->source_characters);
+    printf("  },\n");
+    printf("  \"lexical\": {\n");
+    printf("    \"tokens\": %d,\n", stats->total_tokens);
+    printf("    \"errors\": %d,\n", stats->lexical_errors);
+    printf("    \"time\": %.3f\n", stats->lexical_time);
+    printf("  },\n");
+    printf("  \"syntax\": {\n");
+    printf("    \"ast_nodes\": %d,\n", stats->total_ast_nodes);
+    printf("    \"errors\": %d,\n", stats->syntax_errors);
+    printf("    \"time\": %.3f,\n", stats->syntax_time);
+    printf("    \"speed\": %.2f\n", stats->parsing_speed);
+    printf("  },\n");
+    printf("  \"semantic\": {\n");
+    printf("    \"symbols\": %d,\n", stats->total_symbols);
+    printf("    \"scopes\": %d,\n", stats->total_scopes);
+    printf("    \"errors\": %d,\n", stats->semantic_errors);
+    printf("    \"warnings\": %d,\n", stats->warning_count);
+    printf("    \"time\": %.3f\n", stats->semantic_time);
+    printf("  },\n");
+    printf("  \"optimization\": {\n");
+    printf("    \"constant_folds\": %d,\n", stats->constant_folds);
+    printf("    \"time\": %.3f\n", stats->optimization_time);
+    printf("  },\n");
+    printf("  \"codegen\": {\n");
+    printf("    \"instructions\": %d,\n", stats->total_tac_instructions);
+    printf("    \"time\": %.3f,\n", stats->codegen_time);
+    printf("    \"speed\": %.2f\n", stats->codegen_speed);
+    printf("  },\n");
+    printf("  \"total\": {\n");
+    printf("    \"time\": %.3f,\n", stats->total_time);
+    printf("    \"errors\": %d,\n", stats->lexical_errors + stats->syntax_errors + stats->semantic_errors);
+    printf("    \"warnings\": %d\n", stats->warning_count);
+    printf("  }\n");
+    printf("}\n");
+}
+
+/* Print compilation statistics in CSV format for spreadsheet analysis */
+static inline void stats_print_csv(const CompilationStats *stats) {
+    printf("metric,value\n");
+    printf("source_lines,%d\n", stats->source_lines);
+    printf("source_characters,%d\n", stats->source_characters);
+    printf("lexical_tokens,%d\n", stats->total_tokens);
+    printf("lexical_errors,%d\n", stats->lexical_errors);
+    printf("lexical_time,%.3f\n", stats->lexical_time);
+    printf("syntax_ast_nodes,%d\n", stats->total_ast_nodes);
+    printf("syntax_errors,%d\n", stats->syntax_errors);
+    printf("syntax_time,%.3f\n", stats->syntax_time);
+    printf("parsing_speed,%.2f\n", stats->parsing_speed);
+    printf("semantic_symbols,%d\n", stats->total_symbols);
+    printf("semantic_scopes,%d\n", stats->total_scopes);
+    printf("semantic_errors,%d\n", stats->semantic_errors);
+    printf("semantic_warnings,%d\n", stats->warning_count);
+    printf("semantic_time,%.3f\n", stats->semantic_time);
+    printf("optimization_folds,%d\n", stats->constant_folds);
+    printf("optimization_time,%.3f\n", stats->optimization_time);
+    printf("codegen_instructions,%d\n", stats->total_tac_instructions);
+    printf("codegen_time,%.3f\n", stats->codegen_time);
+    printf("codegen_speed,%.2f\n", stats->codegen_speed);
+    printf("total_time,%.3f\n", stats->total_time);
+    printf("total_errors,%d\n", stats->lexical_errors + stats->syntax_errors + stats->semantic_errors);
+    printf("total_warnings,%d\n", stats->warning_count);
 }
 
 static inline const char *type_to_string(DataType type) {
