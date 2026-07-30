@@ -621,5 +621,9 @@ int main(int argc, char **argv) {
         compilation_stats.codegen_speed = (double)compilation_stats.total_tac_instructions / compilation_stats.codegen_time;
     }
     
+    /* Collect memory usage statistics */
+    compilation_stats.total_memory_allocated = get_total_memory_allocated();
+    compilation_stats.peak_memory_usage = get_peak_memory_usage();
+    
     return EXIT_SUCCESS;
 }

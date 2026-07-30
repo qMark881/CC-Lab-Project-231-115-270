@@ -5,12 +5,23 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Memory tracking variables */
+static size_t total_memory_allocated = 0;
+static size_t peak_memory_usage = 0;
+
 void *xmalloc(size_t size) {
     void *ptr = malloc(size);
     if (!ptr) {
         fprintf(stderr, "Fatal: out of memory\n");
         exit(EXIT_FAILURE);
     }
+    
+    /* Update memory tracking */
+    total_memory_allocated += size;
+    if (total_memory_allocated > peak_memory_usage) {
+        peak_memory_usage = total_memory_allocated;
+    }
+    
     return ptr;
 }
 
@@ -20,6 +31,13 @@ void *xrealloc(void *ptr, size_t size) {
         fprintf(stderr, "Fatal: out of memory\n");
         exit(EXIT_FAILURE);
     }
+    
+    /* Update memory tracking (approximate) */
+    total_memory_allocated += size;
+    if (total_memory_allocated > peak_memory_usage) {
+        peak_memory_usage = total_memory_allocated;
+    }
+    
     return out;
 }
 
@@ -113,4 +131,18 @@ char *extract_code_block(const char *text) {
     if (!f2) return xstrdup(text);
 
     return trim_copy(after_f1, f2);
+}
+
+/* Memory tracking functions */
+size_t get_total_memory_allocated(void) {
+    return total_memory_allocated;
+}
+
+size_t get_peak_memory_usage(void) {
+    return peak_memory_usage;
+}
+
+void reset_memory_tracking(void) {
+    total_memory_allocated = 0;
+    peak_memory_usage = 0;
 }

@@ -95,6 +95,8 @@ typedef struct {
     double codegen_time;          /* Code generation time */
     double parsing_speed;         /* Characters per second during parsing */
     double codegen_speed;         /* Instructions per second during codegen */
+    size_t total_memory_allocated; /* Total memory allocated in bytes */
+    size_t peak_memory_usage;      /* Peak memory usage in bytes */
 } CompilationStats;
 
 /* Initialize compilation statistics structure */
@@ -120,6 +122,8 @@ static inline void stats_init(CompilationStats *stats) {
     stats->codegen_time = 0.0;
     stats->parsing_speed = 0.0;
     stats->codegen_speed = 0.0;
+    stats->total_memory_allocated = 0;
+    stats->peak_memory_usage = 0;
 }
 
 /* Print compilation statistics */
@@ -155,6 +159,13 @@ static inline void stats_print(const CompilationStats *stats) {
     printf("\nTotal Compilation:\n");
     printf("  Total time: %.3f seconds\n", stats->total_time);
     printf("  Overall speed: %.2f chars/sec\n", stats->parsing_speed);
+    printf("\nMemory Usage:\n");
+    printf("  Total allocated: %zu bytes\n", stats->total_memory_allocated);
+    printf("  Peak usage: %zu bytes\n", stats->peak_memory_usage);
+    printf("  Memory efficiency: %.2f MB/s\n", stats->total_time > 0 ? (double)stats->peak_memory_usage / (1024*1024) / stats->total_time : 0.0);
+    printf("=============================\n");
+}
+
 /* Print compilation statistics in JSON format for programmatic access */
 static inline void stats_print_json(const CompilationStats *stats) {
     printf("{\n");
@@ -193,7 +204,9 @@ static inline void stats_print_json(const CompilationStats *stats) {
     printf("  \"total\": {\n");
     printf("    \"time\": %.3f,\n", stats->total_time);
     printf("    \"errors\": %d,\n", stats->lexical_errors + stats->syntax_errors + stats->semantic_errors);
-    printf("    \"warnings\": %d\n", stats->warning_count);
+    printf("    \"warnings\": %d,\n", stats->warning_count);
+    printf("    \"memory_allocated\": %zu,\n", stats->total_memory_allocated);
+    printf("    \"peak_memory\": %zu\n", stats->peak_memory_usage);
     printf("  }\n");
     printf("}\n");
 }
@@ -224,6 +237,8 @@ static inline void stats_print_csv(const CompilationStats *stats) {
     printf("total_time,%.3f\n", stats->total_time);
     printf("total_errors,%d\n", stats->lexical_errors + stats->syntax_errors + stats->semantic_errors);
     printf("total_warnings,%d\n", stats->warning_count);
+    printf("memory_allocated,%zu\n", stats->total_memory_allocated);
+    printf("peak_memory,%zu\n", stats->peak_memory_usage);
 }
 
 static inline const char *type_to_string(DataType type) {

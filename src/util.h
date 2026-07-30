@@ -11,4 +11,9 @@ char *read_entire_file(const char *path);
 char *read_entire_stream(FILE *fp);
 char *extract_code_block(const char *text);
 
+/* Memory tracking functions */
+size_t get_total_memory_allocated(void);
+size_t get_peak_memory_usage(void);
+void reset_memory_tracking(void);
+
 #endif
