@@ -49,6 +49,12 @@ typedef struct {
     int lexical_errors;           /* Number of lexical errors */
     int syntax_errors;            /* Number of syntax errors */
     int semantic_errors;          /* Number of semantic errors */
+    double total_time;            /* Total compilation time in seconds */
+    double lexical_time;          /* Lexical analysis time */
+    double syntax_time;           /* Syntax analysis time */
+    double semantic_time;         /* Semantic analysis time */
+    double optimization_time;     /* Optimization time */
+    double codegen_time;          /* Code generation time */
 } CompilationStats;
 
 /* Initialize compilation statistics structure */
@@ -64,6 +70,12 @@ static inline void stats_init(CompilationStats *stats) {
     stats->lexical_errors = 0;
     stats->syntax_errors = 0;
     stats->semantic_errors = 0;
+    stats->total_time = 0.0;
+    stats->lexical_time = 0.0;
+    stats->syntax_time = 0.0;
+    stats->semantic_time = 0.0;
+    stats->optimization_time = 0.0;
+    stats->codegen_time = 0.0;
 }
 
 /* Print compilation statistics */
@@ -75,17 +87,24 @@ static inline void stats_print(const CompilationStats *stats) {
     printf("\nLexical Analysis:\n");
     printf("  Tokens generated: %d\n", stats->total_tokens);
     printf("  Lexical errors: %d\n", stats->lexical_errors);
+    printf("  Time: %.3f seconds\n", stats->lexical_time);
     printf("\nSyntax Analysis:\n");
     printf("  AST nodes created: %d\n", stats->total_ast_nodes);
     printf("  Syntax errors: %d\n", stats->syntax_errors);
+    printf("  Time: %.3f seconds\n", stats->syntax_time);
     printf("\nSemantic Analysis:\n");
     printf("  Symbols declared: %d\n", stats->total_symbols);
     printf("  Scopes entered: %d\n", stats->total_scopes);
     printf("  Semantic errors: %d\n", stats->semantic_errors);
+    printf("  Time: %.3f seconds\n", stats->semantic_time);
     printf("\nOptimization:\n");
     printf("  Constant folds: %d\n", stats->constant_folds);
+    printf("  Time: %.3f seconds\n", stats->optimization_time);
     printf("\nCode Generation:\n");
     printf("  TAC instructions: %d\n", stats->total_tac_instructions);
+    printf("  Time: %.3f seconds\n", stats->codegen_time);
+    printf("\nTotal Compilation:\n");
+    printf("  Total time: %.3f seconds\n", stats->total_time);
     printf("=============================\n");
 }
 

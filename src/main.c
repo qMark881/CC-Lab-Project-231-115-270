@@ -120,6 +120,9 @@ int main(int argc, char **argv) {
 
     /* Initialize compilation statistics */
     stats_init(&compilation_stats);
+    
+    /* Start total compilation timer */
+    clock_t start_time = clock();
 
     char *source = load_source_text(argv[source_arg]);
     if (!source) {
@@ -147,7 +150,11 @@ int main(int argc, char **argv) {
         printf("=== Starting Lexical and Syntax Analysis ===\n");
     }
     
+    clock_t syntax_start = clock();
     ASTNode *root = parse_program(&parser);
+    clock_t syntax_end = clock();
+    compilation_stats.syntax_time = (double)(syntax_end - syntax_start) / CLOCKS_PER_SEC;
+    
     int parser_errors = parser.error_count;
     compilation_stats.syntax_errors = parser_errors;
     compilation_stats.lexical_errors = parser.error_count; /* Combined for now */
@@ -155,6 +162,7 @@ int main(int argc, char **argv) {
 
     if (verbose_mode) {
         printf("Syntax analysis completed. Parser errors: %d\n", parser_errors);
+        printf("Syntax analysis time: %.3f seconds\n", compilation_stats.syntax_time);
     }
 
     if (parser_errors > 0) {
@@ -171,12 +179,17 @@ int main(int argc, char **argv) {
         printf("=== Starting Semantic Analysis ===\n");
     }
     
+    clock_t semantic_start = clock();
     semantic_analyze(root, &sem);
+    clock_t semantic_end = clock();
+    compilation_stats.semantic_time = (double)(semantic_end - semantic_start) / CLOCKS_PER_SEC;
+    
     int semantic_errors = sem.error_count;
     compilation_stats.semantic_errors = semantic_errors;
 
     if (verbose_mode) {
         printf("Semantic analysis completed. Semantic errors: %d\n", semantic_errors);
+        printf("Semantic analysis time: %.3f seconds\n", compilation_stats.semantic_time);
     }
 
     /* Apply constant folding optimization if no semantic errors */
@@ -184,10 +197,14 @@ int main(int argc, char **argv) {
         if (verbose_mode) {
             printf("=== Starting Constant Folding Optimization ===\n");
         }
+        clock_t opt_start = clock();
         semantic_optimize_constant_folding(root);
+        clock_t opt_end = clock();
+        compilation_stats.optimization_time = (double)(opt_end - opt_start) / CLOCKS_PER_SEC;
         compilation_stats.constant_folds = 1; /* Placeholder for actual count */
         if (verbose_mode) {
             printf("Constant folding optimization completed.\n");
+            printf("Optimization time: %.3f seconds\n", compilation_stats.optimization_time);
         }
     }
 
@@ -232,11 +249,15 @@ int main(int argc, char **argv) {
         printf("=== Generating Three Address Code ===\n");
     }
     
+    clock_t codegen_start = clock();
     tac_generate(root, &tac);
+    clock_t codegen_end = clock();
+    compilation_stats.codegen_time = (double)(codegen_end - codegen_start) / CLOCKS_PER_SEC;
     compilation_stats.total_tac_instructions = tac.instruction_count;
 
     if (verbose_mode) {
         printf("TAC generation completed. Instructions generated: %d\n", tac.instruction_count);
+        printf("Code generation time: %.3f seconds\n", compilation_stats.codegen_time);
     }
 
     print_compilation_stage_header("Three Address Code");
@@ -275,5 +296,10 @@ int main(int argc, char **argv) {
     semantic_destroy(&sem);
     ast_free(root);
     free(source);
+    
+    /* Calculate total compilation time */
+    clock_t end_time = clock();
+    compilation_stats.total_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+    
     return EXIT_SUCCESS;
 }
