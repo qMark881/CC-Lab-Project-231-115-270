@@ -354,6 +354,56 @@ void ast_print_detailed(const ASTNode *node) {
     printf("Child Count: %d\n", node->child_count);
     printf("Child Capacity: %d\n", node->child_cap);
     
+    /* Add detailed type information */
+    printf("Type Information:\n");
+    printf("  - Base Type: %s\n", type_to_string(node->data_type));
+    printf("  - Is Numeric: %s\n", is_numeric_type(node->data_type) ? "Yes" : "No");
+    printf("  - Is Boolean: %s\n", is_bool_type(node->data_type) ? "Yes" : "No");
+    
+    /* Add node-specific information */
+    printf("Node Properties:\n");
+    switch (node->kind) {
+        case NODE_LITERAL:
+            printf("  - Literal Value: %s\n", node->text ? node->text : "(null)");
+            printf("  - Constant: Yes\n");
+            break;
+        case NODE_IDENTIFIER:
+            printf("  - Variable Name: %s\n", node->text ? node->text : "(null)");
+            printf("  - Variable: Yes\n");
+            break;
+        case NODE_BINARY:
+            printf("  - Operator: %s\n", node->text ? node->text : "(null)");
+            printf("  - Expression: Binary\n");
+            break;
+        case NODE_UNARY:
+            printf("  - Operator: %s\n", node->text ? node->text : "(null)");
+            printf("  - Expression: Unary\n");
+            break;
+        case NODE_DECL:
+            printf("  - Declaration Type: %s\n", type_to_string(node->data_type));
+            printf("  - Statement: Declaration\n");
+            break;
+        case NODE_ASSIGN:
+            printf("  - Assignment: Yes\n");
+            printf("  - Statement: Assignment\n");
+            break;
+        case NODE_IF:
+            printf("  - Control Flow: Conditional\n");
+            printf("  - Statement: If\n");
+            break;
+        case NODE_WHILE:
+            printf("  - Control Flow: Loop\n");
+            printf("  - Statement: While\n");
+            break;
+        case NODE_PRINT:
+            printf("  - Output: Yes\n");
+            printf("  - Statement: Print\n");
+            break;
+        default:
+            printf("  - Generic Node\n");
+            break;
+    }
+    
     if (node->child_count > 0) {
         printf("Children:\n");
         for (int i = 0; i < node->child_count; ++i) {
@@ -361,7 +411,8 @@ void ast_print_detailed(const ASTNode *node) {
             if (node->children[i]->text) {
                 printf(" (%s)", node->children[i]->text);
             }
-            printf(" [line %d]\n", node->children[i]->line);
+            printf(" [line %d, type: %s]\n", node->children[i]->line, 
+                   type_to_string(node->children[i]->data_type));
         }
     }
     printf("===============================\n");

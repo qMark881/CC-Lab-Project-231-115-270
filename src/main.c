@@ -533,6 +533,11 @@ int main(int argc, char **argv) {
     print_compilation_stage_header("Readable Summary");
     ast_print_summary(root, 0);
 
+    if (verbose_mode) {
+        print_compilation_stage_header("Detailed AST Node Information");
+        ast_print_detailed(root);
+    }
+
     TacProgram tac;
     tac_init(&tac);
     
