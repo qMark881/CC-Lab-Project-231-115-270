@@ -21,6 +21,7 @@ static bool format_source = false;
 static bool json_output = false;
 static bool csv_output = false;
 static bool show_logo = false;
+static ProfileMode profile_mode = PROFILE_NONE;
 static CompilationStats compilation_stats;
 
 static void print_usage(const char *prog) {
@@ -35,6 +36,7 @@ static void print_usage(const char *prog) {
     fprintf(stderr, "  --format, -F       Format and pretty-print source code\n");
     fprintf(stderr, "  --json, -J         Output statistics in JSON format\n");
     fprintf(stderr, "  --csv, -C          Output statistics in CSV format\n");
+    fprintf(stderr, "  --profile, -P <mode> Enable performance profiling (none|basic|detailed|full)\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "The compiler accepts plain source files and Markdown files with a fenced C code block.\n");
     fprintf(stderr, "Use '-' to read source from standard input.\n");
@@ -342,6 +344,29 @@ int main(int argc, char **argv) {
             source_arg = i + 1;
             continue;
         }
+        if (strcmp(argv[i], "--profile") == 0 || strcmp(argv[i], "-P") == 0) {
+            if (i + 1 < argc) {
+                const char *mode_str = argv[i + 1];
+                if (strcmp(mode_str, "none") == 0) {
+                    profile_mode = PROFILE_NONE;
+                } else if (strcmp(mode_str, "basic") == 0) {
+                    profile_mode = PROFILE_BASIC;
+                } else if (strcmp(mode_str, "detailed") == 0) {
+                    profile_mode = PROFILE_DETAILED;
+                } else if (strcmp(mode_str, "full") == 0) {
+                    profile_mode = PROFILE_FULL;
+                } else {
+                    fprintf(stderr, "Error: invalid profile mode '%s'\n", mode_str);
+                    return EXIT_FAILURE;
+                }
+                i++; // Skip the next argument
+                source_arg = i + 1;
+                continue;
+            } else {
+                fprintf(stderr, "Error: --profile requires a mode argument\n");
+                return EXIT_FAILURE;
+            }
+        }
         if (argv[i][0] != '-') {
             source_arg = i;
             break;
@@ -367,7 +392,14 @@ int main(int argc, char **argv) {
         } else {
             printf("Output: stdout\n");
         }
+        printf("Profile mode: %s\n", profile_mode_to_string(profile_mode));
         printf("==============================\n\n");
+    }
+    
+    /* Print profiling header if profiling is enabled */
+    if (profile_mode != PROFILE_NONE) {
+        printf("=== Performance Profiling Mode: %s ===\n", profile_mode_to_string(profile_mode));
+        printf("Profiling started...\n\n");
     }
 
     /* Initialize compilation statistics */
@@ -612,6 +644,53 @@ int main(int argc, char **argv) {
         } else {
             stats_print(&compilation_stats);
         }
+    }
+    
+    /* Print statistics if requested */
+    if (show_stats) {
+        if (json_output) {
+            stats_print_json(&compilation_stats);
+        } else if (csv_output) {
+            stats_print_csv(&compilation_stats);
+        } else {
+            stats_print(&compilation_stats);
+        }
+    }
+    
+    /* Print profiling summary if profiling is enabled */
+    if (profile_mode != PROFILE_NONE) {
+        printf("\n=== Performance Profiling Summary ===\n");
+        printf("Profile mode: %s\n", profile_mode_to_string(profile_mode));
+        printf("Total compilation time: %.3f seconds\n", compilation_stats.total_time);
+        
+        if (profile_mode >= PROFILE_DETAILED) {
+            printf("\nPhase breakdown:\n");
+            printf("  Lexical analysis: %.3f seconds (%.1f%%)\n", 
+                   compilation_stats.lexical_time,
+                   compilation_stats.total_time > 0 ? (compilation_stats.lexical_time / compilation_stats.total_time * 100) : 0);
+            printf("  Syntax analysis: %.3f seconds (%.1f%%)\n",
+                   compilation_stats.syntax_time,
+                   compilation_stats.total_time > 0 ? (compilation_stats.syntax_time / compilation_stats.total_time * 100) : 0);
+            printf("  Semantic analysis: %.3f seconds (%.1f%%)\n",
+                   compilation_stats.semantic_time,
+                   compilation_stats.total_time > 0 ? (compilation_stats.semantic_time / compilation_stats.total_time * 100) : 0);
+            printf("  Optimization: %.3f seconds (%.1f%%)\n",
+                   compilation_stats.optimization_time,
+                   compilation_stats.total_time > 0 ? (compilation_stats.optimization_time / compilation_stats.total_time * 100) : 0);
+            printf("  Code generation: %.3f seconds (%.1f%%)\n",
+                   compilation_stats.codegen_time,
+                   compilation_stats.total_time > 0 ? (compilation_stats.codegen_time / compilation_stats.total_time * 100) : 0);
+        }
+        
+        if (profile_mode >= PROFILE_FULL) {
+            printf("\nPerformance metrics:\n");
+            printf("  Parsing speed: %.2f chars/sec\n", compilation_stats.parsing_speed);
+            printf("  Codegen speed: %.2f instr/sec\n", compilation_stats.codegen_speed);
+            printf("  Memory allocated: %zu bytes\n", compilation_stats.total_memory_allocated);
+            printf("  Peak memory: %zu bytes\n", compilation_stats.peak_memory_usage);
+        }
+        
+        printf("=====================================\n");
     }
 
     tac_free(&tac);

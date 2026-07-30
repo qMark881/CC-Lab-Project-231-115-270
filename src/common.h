@@ -36,6 +36,25 @@ typedef enum {
     ERR_SEMANTIC_ASSIGNMENT_INCOMPATIBLE = 3009
 } ErrorCode;
 
+/* Profiling modes for performance analysis */
+typedef enum {
+    PROFILE_NONE = 0,      /* No profiling */
+    PROFILE_BASIC = 1,     /* Basic timing information */
+    PROFILE_DETAILED = 2,  /* Detailed per-phase profiling */
+    PROFILE_FULL = 3       /* Full profiling with function-level details */
+} ProfileMode;
+
+/* Convert profile mode to string */
+static inline const char *profile_mode_to_string(ProfileMode mode) {
+    switch (mode) {
+        case PROFILE_NONE: return "none";
+        case PROFILE_BASIC: return "basic";
+        case PROFILE_DETAILED: return "detailed";
+        case PROFILE_FULL: return "full";
+        default: return "unknown";
+    }
+}
+
 /* Warning codes for non-critical issues */
 typedef enum {
     WARN_NONE = 0,
