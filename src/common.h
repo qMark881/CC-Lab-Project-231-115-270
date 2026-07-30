@@ -103,6 +103,7 @@ static inline void stats_print(const CompilationStats *stats) {
     printf("\nCode Generation:\n");
     printf("  TAC instructions: %d\n", stats->total_tac_instructions);
     printf("  Time: %.3f seconds\n", stats->codegen_time);
+    printf("  Validation: %s\n", stats->total_tac_instructions > 0 ? "N/A" : "N/A");
     printf("\nTotal Compilation:\n");
     printf("  Total time: %.3f seconds\n", stats->total_time);
     printf("=============================\n");

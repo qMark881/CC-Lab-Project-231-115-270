@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <ctype.h>
+#include <math.h>
 
 #define COMPILER_VERSION "ZorvLabs Mini Compiler 2.0"
 
@@ -348,11 +349,21 @@ int main(int argc, char **argv) {
     tac_generate(root, &tac);
     clock_t codegen_end = clock();
     compilation_stats.codegen_time = (double)(codegen_end - codegen_start) / CLOCKS_PER_SEC;
-    compilation_stats.total_tac_instructions = tac.instruction_count;
+    compilation_stats.total_tac_instructions = (int)tac.count;
 
     if (verbose_mode) {
-        printf("TAC generation completed. Instructions generated: %d\n", tac.instruction_count);
+        printf("TAC generation completed. Instructions generated: %zu\n", tac.count);
         printf("Code generation time: %.3f seconds\n", compilation_stats.codegen_time);
+        
+        /* Validate TAC if verbose */
+        printf("Validating TAC...\n");
+        bool tac_valid = tac_validate(&tac);
+        if (tac_valid) {
+            printf("TAC validation: PASSED\n");
+        } else {
+            printf("TAC validation: FAILED (%d errors)\n", tac.validation_errors);
+            tac_print_validation_errors(&tac);
+        }
     }
 
     print_compilation_stage_header("Three Address Code");

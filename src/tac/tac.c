@@ -37,6 +37,7 @@ void tac_init(TacProgram *program) {
     program->cap = 0;
     program->temp_counter = 0;
     program->label_counter = 0;
+    program->validation_errors = 0;
 }
 
 void tac_free(TacProgram *program) {
@@ -179,4 +180,106 @@ static void gen_stmt(ASTNode *node, TacProgram *program) {
 
 void tac_generate(ASTNode *root, TacProgram *program) {
     gen_stmt(root, program);
+}
+
+/* Check if a TAC instruction is well-formed */
+static bool validate_instruction(const char *instruction) {
+    if (!instruction || strlen(instruction) == 0) {
+        return false;
+    }
+    
+    /* Check for common TAC instruction patterns */
+    if (strstr(instruction, "goto ") && !strstr(instruction, "goto L")) {
+        return false; /* Invalid goto target */
+    }
+    
+    if (strstr(instruction, "ifFalse ") && !strstr(instruction, "goto ")) {
+        return false; /* Incomplete conditional jump */
+    }
+    
+    /* Check for label definition format */
+    if (strchr(instruction, ':')) {
+        const char *colon = strchr(instruction, ':');
+        if (colon != instruction + strlen(instruction) - 1) {
+            /* Label should be at end of line or followed by space */
+            if (colon[1] != ' ' && colon[1] != '\0') {
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+
+/* Validate the entire TAC program for consistency */
+bool tac_validate(const TacProgram *program) {
+    if (!program) return false;
+    
+    bool valid = true;
+    int label_count = 0;
+    
+    /* Count label definitions */
+    for (size_t i = 0; i < program->count; ++i) {
+        const char *line = program->lines[i];
+        if (strchr(line, ':')) {
+            label_count++;
+        }
+    }
+    
+    /* Validate each instruction */
+    for (size_t i = 0; i < program->count; ++i) {
+        if (!validate_instruction(program->lines[i])) {
+            valid = false;
+            ((TacProgram *)program)->validation_errors++;
+        }
+    }
+    
+    /* Check for basic control flow consistency */
+    for (size_t i = 0; i < program->count; ++i) {
+        const char *line = program->lines[i];
+        
+        /* Check if goto targets exist */
+        if (strstr(line, "goto L")) {
+            const char *target = strstr(line, "goto L") + 5;
+            char target_label[32];
+            sscanf(target, "%d", (int*)&target_label);
+            
+            /* Verify target label exists */
+            bool found = false;
+            for (size_t j = 0; j < program->count; ++j) {
+                char search_label[32];
+                snprintf(search_label, sizeof(search_label), "L%d:", target_label);
+                if (strstr(program->lines[j], search_label)) {
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                valid = false;
+                ((TacProgram *)program)->validation_errors++;
+            }
+        }
+    }
+    
+    return valid;
+}
+
+/* Print validation errors if any exist */
+void tac_print_validation_errors(const TacProgram *program) {
+    if (!program) return;
+    
+    if (program->validation_errors == 0) {
+        printf("TAC validation: PASSED (%zu instructions)\n", program->count);
+        return;
+    }
+    
+    printf("TAC validation: FAILED (%d errors found)\n", program->validation_errors);
+    
+    /* Print specific errors */
+    for (size_t i = 0; i < program->count; ++i) {
+        if (!validate_instruction(program->lines[i])) {
+            printf("  Invalid instruction at line %zu: %s\n", i+1, program->lines[i]);
+        }
+    }
 }
