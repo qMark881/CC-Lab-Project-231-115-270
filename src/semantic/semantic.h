@@ -30,4 +30,8 @@ void semantic_destroy(SemanticContext *ctx);
  * undeclared variables, redeclarations, and other semantic issues. */
 void semantic_analyze(ASTNode *root, SemanticContext *ctx);
 
+/* Perform constant folding optimization on the AST.
+ * Evaluates constant expressions at compile time. */
+void semantic_optimize_constant_folding(ASTNode *root);
+
 #endif

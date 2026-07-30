@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
+#include <math.h>
 
 /* Report a semantic error with formatted message.
  * Increments the error count and prints the error to stderr. */
@@ -206,6 +208,8 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx);
  * Enters a new scope, analyzes all statements, then exits the scope. */
 static void analyze_block(ASTNode *node, SemanticContext *ctx) {
     symtab_enter_scope(&ctx->table);
+    /* Debug: Print symbol table after entering scope */
+    symtab_print(&ctx->table);
     for (int i = 0; i < node->child_count; ++i) {
         analyze_stmt(node->children[i], ctx);
     }
@@ -340,4 +344,186 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
  * This is the main entry point for semantic analysis. */
 void semantic_analyze(ASTNode *root, SemanticContext *ctx) {
     analyze_stmt(root, ctx);
+}
+
+/* Helper function to check if a node is a constant literal */
+static bool is_constant_literal(ASTNode *node) {
+    return node && node->kind == NODE_LITERAL;
+}
+
+/* Helper function to get integer value from a literal node */
+static int get_int_value(ASTNode *node) {
+    if (!node || !node->text) return 0;
+    int value = 0;
+    sscanf(node->text, "%d", &value);
+    return value;
+}
+
+/* Helper function to get float value from a literal node */
+static float get_float_value(ASTNode *node) {
+    if (!node || !node->text) return 0.0f;
+    float value = 0.0f;
+    sscanf(node->text, "%f", &value);
+    return value;
+}
+
+/* Helper function to create a new literal node from an integer value */
+static ASTNode *create_int_literal(int value, int line) {
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), "%d", value);
+    return ast_make_literal(buffer, TYPE_INT, line);
+}
+
+/* Helper function to create a new literal node from a float value */
+static ASTNode *create_float_literal(float value, int line) {
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), "%.2f", value);
+    return ast_make_literal(buffer, TYPE_FLOAT, line);
+}
+
+/* Perform constant folding on a binary expression node */
+static ASTNode *fold_binary_expression(ASTNode *node) {
+    if (!node || node->kind != NODE_BINARY || node->child_count < 2) {
+        return node;
+    }
+
+    ASTNode *left = node->children[0];
+    ASTNode *right = node->children[1];
+
+    /* Only fold if both operands are constant literals */
+    if (!is_constant_literal(left) || !is_constant_literal(right)) {
+        return node;
+    }
+
+    const char *op = node->text;
+    int line = node->line;
+
+    /* Handle integer operations */
+    if (left->data_type == TYPE_INT && right->data_type == TYPE_INT) {
+        int left_val = get_int_value(left);
+        int right_val = get_int_value(right);
+        int result;
+
+        if (strcmp(op, "+") == 0) {
+            result = left_val + right_val;
+        } else if (strcmp(op, "-") == 0) {
+            result = left_val - right_val;
+        } else if (strcmp(op, "*") == 0) {
+            result = left_val * right_val;
+        } else if (strcmp(op, "/") == 0) {
+            if (right_val == 0) return node; /* Don't fold division by zero */
+            result = left_val / right_val;
+        } else if (strcmp(op, "%") == 0) {
+            if (right_val == 0) return node; /* Don't fold modulo by zero */
+            result = left_val % right_val;
+        } else {
+            return node; /* Not a foldable operation */
+        }
+
+        return create_int_literal(result, line);
+    }
+
+    /* Handle float operations */
+    if ((left->data_type == TYPE_FLOAT || right->data_type == TYPE_FLOAT)) {
+        float left_val = (left->data_type == TYPE_FLOAT) ? get_float_value(left) : (float)get_int_value(left);
+        float right_val = (right->data_type == TYPE_FLOAT) ? get_float_value(right) : (float)get_int_value(right);
+        float result;
+
+        if (strcmp(op, "+") == 0) {
+            result = left_val + right_val;
+        } else if (strcmp(op, "-") == 0) {
+            result = left_val - right_val;
+        } else if (strcmp(op, "*") == 0) {
+            result = left_val * right_val;
+        } else if (strcmp(op, "/") == 0) {
+            if (right_val == 0.0f) return node; /* Don't fold division by zero */
+            result = left_val / right_val;
+        } else {
+            return node; /* Not a foldable operation */
+        }
+
+        return create_float_literal(result, line);
+    }
+
+    return node;
+}
+
+/* Perform constant folding on a unary expression node */
+static ASTNode *fold_unary_expression(ASTNode *node) {
+    if (!node || node->kind != NODE_UNARY || node->child_count < 1) {
+        return node;
+    }
+
+    ASTNode *operand = node->children[0];
+
+    /* Only fold if operand is a constant literal */
+    if (!is_constant_literal(operand)) {
+        return node;
+    }
+
+    const char *op = node->text;
+    int line = node->line;
+
+    /* Handle integer negation */
+    if (operand->data_type == TYPE_INT && strcmp(op, "-") == 0) {
+        int value = get_int_value(operand);
+        return create_int_literal(-value, line);
+    }
+
+    /* Handle float negation */
+    if (operand->data_type == TYPE_FLOAT && strcmp(op, "-") == 0) {
+        float value = get_float_value(operand);
+        return create_float_literal(-value, line);
+    }
+
+    return node;
+}
+
+/* Recursively apply constant folding to an AST subtree */
+static void apply_constant_folding(ASTNode *node) {
+    if (!node) return;
+
+    /* First, recursively process children */
+    for (int i = 0; i < node->child_count; ++i) {
+        apply_constant_folding(node->children[i]);
+    }
+
+    /* Then try to fold this node if it's an expression */
+    if (node->kind == NODE_BINARY) {
+        ASTNode *folded = fold_binary_expression(node);
+        if (folded != node) {
+            /* Replace children and convert to literal */
+            for (int i = 0; i < node->child_count; ++i) {
+                ast_free(node->children[i]);
+            }
+            node->child_count = 0;
+            free(node->text);
+            node->text = xstrdup(folded->text);
+            node->data_type = folded->data_type;
+            node->kind = NODE_LITERAL;
+            ast_free(folded);
+        }
+    } else if (node->kind == NODE_UNARY) {
+        ASTNode *folded = fold_unary_expression(node);
+        if (folded != node) {
+            /* Replace children and convert to literal */
+            for (int i = 0; i < node->child_count; ++i) {
+                ast_free(node->children[i]);
+            }
+            node->child_count = 0;
+            free(node->text);
+            node->text = xstrdup(folded->text);
+            node->data_type = folded->data_type;
+            node->kind = NODE_LITERAL;
+            ast_free(folded);
+        }
+    }
+}
+
+/* Perform constant folding optimization on the AST.
+ * This function evaluates constant expressions at compile time and replaces
+ * them with their computed values, improving runtime performance. */
+void semantic_optimize_constant_folding(ASTNode *root) {
+    if (!root) return;
+    apply_constant_folding(root);
 }

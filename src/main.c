@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <time.h>
+#include <ctype.h>
 
 #define COMPILER_VERSION "ZorvLabs Mini Compiler 2.0"
 
@@ -154,6 +155,17 @@ int main(int argc, char **argv) {
 
     if (verbose_mode) {
         printf("Semantic analysis completed. Semantic errors: %d\n", semantic_errors);
+    }
+
+    /* Apply constant folding optimization if no semantic errors */
+    if (semantic_errors == 0) {
+        if (verbose_mode) {
+            printf("=== Starting Constant Folding Optimization ===\n");
+        }
+        semantic_optimize_constant_folding(root);
+        if (verbose_mode) {
+            printf("Constant folding optimization completed.\n");
+        }
     }
 
     if (semantic_errors > 0) {
