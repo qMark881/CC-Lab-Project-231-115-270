@@ -7,16 +7,17 @@
 #include <ctype.h>
 #include <math.h>
 
-/* Report a semantic error with formatted message.
+/* Report a semantic error with formatted message and error code.
  * Increments the error count and prints the error to stderr. */
-static void semantic_error(SemanticContext *ctx, int line, const char *fmt, ...) {
+static void semantic_error(SemanticContext *ctx, int line, ErrorCode code, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    fprintf(stderr, "Semantic Error: ");
+    fprintf(stderr, "[%s] ", error_code_to_string(code));
     vfprintf(stderr, fmt, args);
-    fprintf(stderr, " at line %d\n", line);
+    fprintf(stderr, " at line %d: %s\n", line, error_code_description(code));
     va_end(args);
     ctx->error_count++;
+    ctx->last_error_code = code;
 }
 
 /* Initialize the semantic analysis context.
@@ -25,6 +26,7 @@ void semantic_init(SemanticContext *ctx) {
     symtab_init(&ctx->table);
     ctx->issues = NULL;
     ctx->error_count = 0;
+    ctx->last_error_code = ERR_NONE;
 }
 
 /* Clean up semantic analysis resources.
@@ -75,12 +77,12 @@ static DataType lookup_identifier(ASTNode *node, SemanticContext *ctx) {
     if (any) {
         if (!issue_already_reported(ctx, 1, node->text)) {
             remember_issue(ctx, 1, node->text);
-            semantic_error(ctx, node->line, "Variable '%s' is out of scope", node->text);
+            semantic_error(ctx, node->line, ERR_SEMANTIC_OUT_OF_SCOPE, "Variable '%s' is out of scope", node->text);
         }
     } else {
         if (!issue_already_reported(ctx, 0, node->text)) {
             remember_issue(ctx, 0, node->text);
-            semantic_error(ctx, node->line, "Undeclared variable '%s'", node->text);
+            semantic_error(ctx, node->line, ERR_SEMANTIC_UNDECLARED_VAR, "Undeclared variable '%s'", node->text);
         }
     }
     node->data_type = TYPE_ERROR;
@@ -96,12 +98,12 @@ static DataType analyze_binary(ASTNode *node, SemanticContext *ctx) {
 
     if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0 || strcmp(op, "%") == 0) {
         if (!is_numeric_type(left) || !is_numeric_type(right)) {
-            semantic_error(ctx, node->line, "Invalid expression: arithmetic operator '%s' requires numeric operands", op);
+            semantic_error(ctx, node->line, ERR_SEMANTIC_INVALID_ARITHMETIC, "Invalid expression: arithmetic operator '%s' requires numeric operands", op);
             node->data_type = TYPE_ERROR;
             return TYPE_ERROR;
         }
         if (strcmp(op, "%") == 0 && (left != TYPE_INT || right != TYPE_INT)) {
-            semantic_error(ctx, node->line, "Invalid expression: modulo operator requires integer operands");
+            semantic_error(ctx, node->line, ERR_SEMANTIC_INVALID_MODULO, "Invalid expression: modulo operator requires integer operands");
             node->data_type = TYPE_ERROR;
             return TYPE_ERROR;
         }
@@ -111,7 +113,7 @@ static DataType analyze_binary(ASTNode *node, SemanticContext *ctx) {
 
     if (strcmp(op, "<") == 0 || strcmp(op, ">") == 0 || strcmp(op, "<=") == 0 || strcmp(op, ">=") == 0) {
         if (!is_numeric_type(left) || !is_numeric_type(right)) {
-            semantic_error(ctx, node->line, "Invalid expression: relational operator '%s' requires numeric operands", op);
+            semantic_error(ctx, node->line, ERR_SEMANTIC_INVALID_RELATIONAL, "Invalid expression: relational operator '%s' requires numeric operands", op);
             node->data_type = TYPE_ERROR;
             return TYPE_ERROR;
         }
@@ -123,7 +125,7 @@ static DataType analyze_binary(ASTNode *node, SemanticContext *ctx) {
         bool both_numeric = is_numeric_type(left) && is_numeric_type(right);
         bool both_bool = left == TYPE_BOOL && right == TYPE_BOOL;
         if (!both_numeric && !both_bool) {
-            semantic_error(ctx, node->line, "Invalid expression: equality operator '%s' requires matching operands", op);
+            semantic_error(ctx, node->line, ERR_SEMANTIC_TYPE_MISMATCH, "Invalid expression: equality operator '%s' requires matching operands", op);
             node->data_type = TYPE_ERROR;
             return TYPE_ERROR;
         }
@@ -133,7 +135,7 @@ static DataType analyze_binary(ASTNode *node, SemanticContext *ctx) {
 
     if (strcmp(op, "&&") == 0 || strcmp(op, "||") == 0) {
         if (!is_bool_type(left) || !is_bool_type(right)) {
-            semantic_error(ctx, node->line, "Invalid expression: logical operator '%s' requires bool operands", op);
+            semantic_error(ctx, node->line, ERR_SEMANTIC_INVALID_LOGICAL, "Invalid expression: logical operator '%s' requires bool operands", op);
             node->data_type = TYPE_ERROR;
             return TYPE_ERROR;
         }
@@ -141,7 +143,7 @@ static DataType analyze_binary(ASTNode *node, SemanticContext *ctx) {
         return TYPE_BOOL;
     }
 
-    semantic_error(ctx, node->line, "Unknown binary operator '%s'", op);
+    semantic_error(ctx, node->line, ERR_SEMANTIC_INVALID_ARITHMETIC, "Unknown binary operator '%s'", op);
     node->data_type = TYPE_ERROR;
     return TYPE_ERROR;
 }
@@ -153,7 +155,7 @@ static DataType analyze_unary(ASTNode *node, SemanticContext *ctx) {
     const char *op = node->text;
     if (strcmp(op, "!") == 0) {
         if (!is_bool_type(operand)) {
-            semantic_error(ctx, node->line, "Invalid expression: logical not requires bool operand");
+            semantic_error(ctx, node->line, ERR_SEMANTIC_INVALID_LOGICAL, "Invalid expression: logical not requires bool operand");
             node->data_type = TYPE_ERROR;
             return TYPE_ERROR;
         }
@@ -162,14 +164,14 @@ static DataType analyze_unary(ASTNode *node, SemanticContext *ctx) {
     }
     if (strcmp(op, "-") == 0) {
         if (!is_numeric_type(operand)) {
-            semantic_error(ctx, node->line, "Invalid expression: unary minus requires numeric operand");
+            semantic_error(ctx, node->line, ERR_SEMANTIC_INVALID_ARITHMETIC, "Invalid expression: unary minus requires numeric operand");
             node->data_type = TYPE_ERROR;
             return TYPE_ERROR;
         }
         node->data_type = operand;
         return operand;
     }
-    semantic_error(ctx, node->line, "Unknown unary operator '%s'", op);
+    semantic_error(ctx, node->line, ERR_SEMANTIC_INVALID_ARITHMETIC, "Unknown unary operator '%s'", op);
     node->data_type = TYPE_ERROR;
     return TYPE_ERROR;
 }
@@ -235,22 +237,22 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
         case NODE_DECL: {
             /* Analyze variable declarations with type checking of initializers */
             if (node->child_count < 1 || !node->children[0] || node->children[0]->kind != NODE_IDENTIFIER) {
-                semantic_error(ctx, node->line, "Malformed declaration");
+                semantic_error(ctx, node->line, ERR_SYNTAX_EXPECTED_IDENTIFIER, "Malformed declaration");
                 break;
             }
             const char *name = node->children[0]->text;
             DataType declared = node->data_type;
             if (symtab_lookup_current_scope(&ctx->table, name)) {
-                semantic_error(ctx, node->line, "Redeclaration of variable '%s'", name);
+                semantic_error(ctx, node->line, ERR_SEMANTIC_REDECLARATION, "Redeclaration of variable '%s'", name);
                 break;
             }
             if (node->child_count > 1) {
                 DataType init_type = analyze_expr(node->children[1], ctx);
                 if (!assignment_compatible(declared, init_type)) {
                     if (declared == TYPE_INT && init_type == TYPE_BOOL) {
-                        semantic_error(ctx, node->line, "Cannot assign bool to int");
+                        semantic_error(ctx, node->line, ERR_SEMANTIC_ASSIGNMENT_INCOMPATIBLE, "Cannot assign bool to int");
                     } else {
-                        semantic_error(ctx, node->line, "Type mismatch in assignment\nExpected %s\nFound %s",
+                        semantic_error(ctx, node->line, ERR_SEMANTIC_TYPE_MISMATCH, "Type mismatch in assignment\nExpected %s\nFound %s",
                                        type_to_string(declared), type_to_string(init_type));
                     }
                 }
@@ -262,7 +264,7 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
         case NODE_ASSIGN: {
             /* Analyze assignment statements with type checking */
             if (node->child_count != 2 || !node->children[0] || node->children[0]->kind != NODE_IDENTIFIER) {
-                semantic_error(ctx, node->line, "Malformed assignment");
+                semantic_error(ctx, node->line, ERR_SYNTAX_EXPECTED_IDENTIFIER, "Malformed assignment");
                 break;
             }
             ASTNode *id = node->children[0];
@@ -272,12 +274,12 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
                 if (symtab_lookup_any(&ctx->table, id->text)) {
                     if (!issue_already_reported(ctx, 1, id->text)) {
                         remember_issue(ctx, 1, id->text);
-                        semantic_error(ctx, node->line, "Variable '%s' is out of scope", id->text);
+                        semantic_error(ctx, node->line, ERR_SEMANTIC_OUT_OF_SCOPE, "Variable '%s' is out of scope", id->text);
                     }
                 } else {
                     if (!issue_already_reported(ctx, 0, id->text)) {
                         remember_issue(ctx, 0, id->text);
-                        semantic_error(ctx, node->line, "Undeclared variable '%s'", id->text);
+                        semantic_error(ctx, node->line, ERR_SEMANTIC_UNDECLARED_VAR, "Undeclared variable '%s'", id->text);
                     }
                 }
                 break;
@@ -298,12 +300,12 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
         case NODE_IF: {
             /* Analyze if statements with boolean condition checking */
             if (node->child_count < 2) {
-                semantic_error(ctx, node->line, "Malformed if statement");
+                semantic_error(ctx, node->line, ERR_SYNTAX_UNEXPECTED_TOKEN, "Malformed if statement");
                 break;
             }
             DataType cond_type = analyze_expr(node->children[0], ctx);
             if (cond_type != TYPE_BOOL && cond_type != TYPE_ERROR) {
-                semantic_error(ctx, node->line, "Condition must be bool");
+                semantic_error(ctx, node->line, ERR_SEMANTIC_CONDITION_NOT_BOOL, "Condition must be bool");
             }
             analyze_stmt(node->children[1], ctx);
             if (node->child_count > 2) {
@@ -315,12 +317,12 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
         case NODE_WHILE: {
             /* Analyze while statements with boolean condition checking */
             if (node->child_count < 2) {
-                semantic_error(ctx, node->line, "Malformed while statement");
+                semantic_error(ctx, node->line, ERR_SYNTAX_UNEXPECTED_TOKEN, "Malformed while statement");
                 break;
             }
             DataType cond_type = analyze_expr(node->children[0], ctx);
             if (cond_type != TYPE_BOOL && cond_type != TYPE_ERROR) {
-                semantic_error(ctx, node->line, "Condition must be bool");
+                semantic_error(ctx, node->line, ERR_SEMANTIC_CONDITION_NOT_BOOL, "Condition must be bool");
             }
             analyze_stmt(node->children[1], ctx);
             break;
@@ -329,7 +331,7 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
         case NODE_PRINT:
             /* Analyze print statements by checking the expression type */
             if (node->child_count != 1) {
-                semantic_error(ctx, node->line, "Malformed print statement");
+                semantic_error(ctx, node->line, ERR_SYNTAX_UNEXPECTED_TOKEN, "Malformed print statement");
                 break;
             }
             analyze_expr(node->children[0], ctx);

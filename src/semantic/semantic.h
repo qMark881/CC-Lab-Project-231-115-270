@@ -18,6 +18,7 @@ typedef struct SemanticContext {
     SymbolTable table;                /* Symbol table for variable declarations and scope tracking */
     ReportedIssue *issues;            /* Linked list of semantic issues found */
     int error_count;                  /* Total number of semantic errors encountered */
+    ErrorCode last_error_code;        /* Last error code encountered */
 } SemanticContext;
 
 /* Initialize the semantic analysis context with an empty symbol table. */

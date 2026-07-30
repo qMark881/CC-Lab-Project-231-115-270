@@ -66,6 +66,7 @@ typedef struct Lexer {
     char *pending_error;          /* Pending error message */
     int pending_error_line;       /* Line number of pending error */
     int pending_error_column;     /* Column number of pending error */
+    ErrorCode pending_error_code;  /* Error code for pending error */
 } Lexer;
 
 /* Initialize the lexer with source code */

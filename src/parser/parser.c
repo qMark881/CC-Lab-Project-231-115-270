@@ -13,16 +13,17 @@ static void parser_advance(Parser *parser) {
     parser->current = lexer_next(&parser->lexer);
 }
 
-/* Report a syntax error with formatted message.
+/* Report a syntax error with formatted message and error code.
  * Increments the error count and prints the error to stderr. */
-static void parser_error(Parser *parser, int line, const char *fmt, ...) {
+static void parser_error(Parser *parser, int line, ErrorCode code, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    fprintf(stderr, "Syntax Error: ");
+    fprintf(stderr, "[%s] ", error_code_to_string(code));
     vfprintf(stderr, fmt, args);
-    fprintf(stderr, " at line %d\n", line);
+    fprintf(stderr, " at line %d: %s\n", line, error_code_description(code));
     va_end(args);
     parser->error_count++;
+    parser->last_error_code = code;
 }
 
 /* Check if the current token matches the expected type.
@@ -39,11 +40,11 @@ static bool parser_match(Parser *parser, TokenType type) {
 /* Expect the current token to be of a specific type.
  * If it matches, consume the token and return true.
  * Otherwise, report an error with the given message and return false. */
-static bool parser_expect(Parser *parser, TokenType type, const char *message) {
+static bool parser_expect(Parser *parser, TokenType type, const char *message, ErrorCode code) {
     if (parser_match(parser, type)) {
         return true;
     }
-    parser_error(parser, parser->current.line, "%s", message);
+    parser_error(parser, parser->current.line, code, "%s", message);
     return false;
 }
 
@@ -117,7 +118,7 @@ static ASTNode *parse_primary(Parser *parser) {
             parser_advance(parser);
             ASTNode *expr = parse_expression(parser);
             if (!parser_match(parser, TOK_RPAREN)) {
-                parser_error(parser, parser->current.line, "Missing ')'");
+                parser_error(parser, parser->current.line, ERR_SYNTAX_MISSING_RPAREN, "Missing ')'");
             }
             return expr;
         }
@@ -276,7 +277,7 @@ static ASTNode *parse_decl(Parser *parser) {
         ast_add_child(decl, init);
     }
 
-    if (!parser_expect(parser, TOK_SEMI, "Missing ';'")) {
+    if (!parser_expect(parser, TOK_SEMI, "Missing ';'", ERR_SYNTAX_MISSING_SEMICOLON)) {
         /* Recover by leaving current token untouched if it's already the next statement. */
     }
 
@@ -296,14 +297,14 @@ static ASTNode *parse_assignment(Parser *parser) {
     ast_add_child(assign, id);
 
     if (!parser_match(parser, TOK_ASSIGN)) {
-        parser_error(parser, parser->current.line, "Missing '=' in assignment");
+        parser_error(parser, parser->current.line, ERR_SYNTAX_MISSING_ASSIGN, "Missing '=' in assignment");
         return assign;
     }
 
     ASTNode *rhs = parse_expression(parser);
     ast_add_child(assign, rhs);
 
-    if (!parser_expect(parser, TOK_SEMI, "Missing ';'")) {
+    if (!parser_expect(parser, TOK_SEMI, "Missing ';'", ERR_SYNTAX_MISSING_SEMICOLON)) {
         /* recovery */
     }
 
@@ -320,7 +321,7 @@ static ASTNode *parse_print(Parser *parser) {
     ASTNode *expr = parse_expression(parser);
     ast_add_child(node, expr);
 
-    if (!parser_expect(parser, TOK_SEMI, "Missing ';'")) {
+    if (!parser_expect(parser, TOK_SEMI, "Missing ';'", ERR_SYNTAX_MISSING_SEMICOLON)) {
         /* recovery */
     }
 
@@ -335,14 +336,14 @@ static ASTNode *parse_if(Parser *parser) {
 
     ASTNode *node = ast_create(NODE_IF, "if", kw.line);
 
-    if (!parser_expect(parser, TOK_LPAREN, "Missing '('")) {
+    if (!parser_expect(parser, TOK_LPAREN, "Missing '('", ERR_SYNTAX_MISSING_LPAREN)) {
         /* continue */
     }
     ASTNode *cond = parse_expression(parser);
     ast_add_child(node, cond);
 
     if (!parser_match(parser, TOK_RPAREN)) {
-        parser_error(parser, parser->current.line, "Missing ')'");
+        parser_error(parser, parser->current.line, ERR_SYNTAX_MISSING_RPAREN, "Missing ')'");
     }
 
     ASTNode *then_block = parse_block(parser);
@@ -364,14 +365,14 @@ static ASTNode *parse_while(Parser *parser) {
 
     ASTNode *node = ast_create(NODE_WHILE, "while", kw.line);
 
-    if (!parser_expect(parser, TOK_LPAREN, "Missing '('")) {
+    if (!parser_expect(parser, TOK_LPAREN, "Missing '('", ERR_SYNTAX_MISSING_LPAREN)) {
         /* continue */
     }
     ASTNode *cond = parse_expression(parser);
     ast_add_child(node, cond);
 
     if (!parser_match(parser, TOK_RPAREN)) {
-        parser_error(parser, parser->current.line, "Missing ')'");
+        parser_error(parser, parser->current.line, ERR_SYNTAX_MISSING_RPAREN, "Missing ')'");
     }
 
     ASTNode *body = parse_block(parser);
@@ -385,7 +386,7 @@ static ASTNode *parse_block(Parser *parser) {
     int line = parser->current.line;
     ASTNode *block = ast_create(NODE_BLOCK, "block", line);
     if (!parser_match(parser, TOK_LBRACE)) {
-        parser_error(parser, line, "Missing '{'");
+        parser_error(parser, line, ERR_SYNTAX_MISSING_LBRACE, "Missing '{'");
         return block;
     }
 
@@ -408,7 +409,7 @@ static ASTNode *parse_block(Parser *parser) {
     }
 
     if (!parser_match(parser, TOK_RBRACE)) {
-        parser_error(parser, parser->current.line, "Missing '}'");
+        parser_error(parser, parser->current.line, ERR_SYNTAX_MISSING_RBRACE, "Missing '}'");
     }
 
     return block;
@@ -461,6 +462,7 @@ void parser_init(Parser *parser, const char *source) {
     lexer_init(&parser->lexer, source);
     parser->current = lexer_next(&parser->lexer);
     parser->error_count = 0;
+    parser->last_error_code = ERR_NONE;
 }
 
 /* Clean up parser resources by freeing the current token. */

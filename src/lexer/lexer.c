@@ -98,7 +98,12 @@ static void skip_whitespace_and_comments(Lexer *lexer) {
                 lexer->has_pending_error = true;
                 lexer->pending_error_line = comment_line;
                 lexer->pending_error_column = comment_column;
-                lexer->pending_error = xstrdup("Unterminated block comment");
+                char error_msg[128];
+                snprintf(error_msg, sizeof(error_msg), "[%s] Unterminated block comment at line %d, column %d: %s", 
+                         error_code_to_string(ERR_LEXICAL_UNTERMINATED_COMMENT), comment_line, comment_column,
+                         error_code_description(ERR_LEXICAL_UNTERMINATED_COMMENT));
+                lexer->pending_error = xstrdup(error_msg);
+                lexer->pending_error_code = ERR_LEXICAL_UNTERMINATED_COMMENT;
                 return;
             }
             continue;
@@ -120,6 +125,7 @@ void lexer_init(Lexer *lexer, const char *source) {
     lexer->pending_error = NULL;
     lexer->pending_error_line = 1;
     lexer->pending_error_column = 1;
+    lexer->pending_error_code = ERR_NONE;
 }
 
 /* Determines if a given identifier text is a keyword.
@@ -266,9 +272,12 @@ Token lexer_next(Lexer *lexer) {
 
     /* Handle invalid characters */
     char invalid[2] = { c, '\0' };
-    char error_msg[64];
-    snprintf(error_msg, sizeof(error_msg), "Invalid character '%s' at line %d, column %d", invalid, line, lexer->column);
-    return make_invalid_token(error_msg, line);
+    char error_msg[128];
+    snprintf(error_msg, sizeof(error_msg), "[%s] Invalid character '%s' at line %d, column %d: %s", 
+             error_code_to_string(ERR_LEXICAL_INVALID_CHAR), invalid, line, lexer->column, 
+             error_code_description(ERR_LEXICAL_INVALID_CHAR));
+    Token tok = make_invalid_token(error_msg, line);
+    return tok;
 }
 
 /* Frees the memory allocated for a token's lexeme.

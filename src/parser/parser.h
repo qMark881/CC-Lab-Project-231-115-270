@@ -11,6 +11,7 @@ typedef struct Parser {
     Lexer lexer;          /* Lexer instance for token generation */
     Token current;        /* Current token being processed */
     int error_count;      /* Number of syntax errors encountered */
+    ErrorCode last_error_code; /* Last error code encountered */
 } Parser;
 
 /* Initialize the parser with source code */
