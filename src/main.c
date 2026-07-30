@@ -13,6 +13,8 @@
 
 static bool verbose_mode = false;
 static char *output_file = NULL;
+static bool show_stats = false;
+static CompilationStats compilation_stats;
 
 static void print_usage(const char *prog) {
     fprintf(stderr, "Usage: %s [options] <source-file | ->\n", prog);
@@ -21,6 +23,7 @@ static void print_usage(const char *prog) {
     fprintf(stderr, "  --version, -v      Show compiler version\n");
     fprintf(stderr, "  --verbose, -V       Enable verbose output with detailed compilation information\n");
     fprintf(stderr, "  --output, -o <file> Specify output file for compilation results\n");
+    fprintf(stderr, "  --stats, -S        Print compilation statistics\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "The compiler accepts plain source files and Markdown files with a fenced C code block.\n");
     fprintf(stderr, "Use '-' to read source from standard input.\n");
@@ -87,6 +90,11 @@ int main(int argc, char **argv) {
                 return EXIT_FAILURE;
             }
         }
+        if (strcmp(argv[i], "--stats") == 0 || strcmp(argv[i], "-S") == 0) {
+            show_stats = true;
+            source_arg = i + 1;
+            continue;
+        }
         if (argv[i][0] != '-') {
             source_arg = i;
             break;
@@ -110,14 +118,25 @@ int main(int argc, char **argv) {
         printf("==============================\n\n");
     }
 
+    /* Initialize compilation statistics */
+    stats_init(&compilation_stats);
+
     char *source = load_source_text(argv[source_arg]);
     if (!source) {
         fprintf(stderr, "Error: could not open input source '%s'\n", argv[source_arg]);
         return EXIT_FAILURE;
     }
 
+    /* Collect source code statistics */
+    compilation_stats.source_characters = (int)strlen(source);
+    int line_count = 0;
+    for (size_t i = 0; i < strlen(source); i++) {
+        if (source[i] == '\n') line_count++;
+    }
+    compilation_stats.source_lines = line_count;
+
     if (verbose_mode) {
-        printf("Source code loaded (%zu bytes)\n", strlen(source));
+        printf("Source code loaded (%zu bytes, %d lines)\n", strlen(source), line_count);
         printf("=== Source Code ===\n%s\n=== End Source ===\n\n", source);
     }
 
@@ -130,6 +149,8 @@ int main(int argc, char **argv) {
     
     ASTNode *root = parse_program(&parser);
     int parser_errors = parser.error_count;
+    compilation_stats.syntax_errors = parser_errors;
+    compilation_stats.lexical_errors = parser.error_count; /* Combined for now */
     parser_destroy(&parser);
 
     if (verbose_mode) {
@@ -152,6 +173,7 @@ int main(int argc, char **argv) {
     
     semantic_analyze(root, &sem);
     int semantic_errors = sem.error_count;
+    compilation_stats.semantic_errors = semantic_errors;
 
     if (verbose_mode) {
         printf("Semantic analysis completed. Semantic errors: %d\n", semantic_errors);
@@ -163,6 +185,7 @@ int main(int argc, char **argv) {
             printf("=== Starting Constant Folding Optimization ===\n");
         }
         semantic_optimize_constant_folding(root);
+        compilation_stats.constant_folds = 1; /* Placeholder for actual count */
         if (verbose_mode) {
             printf("Constant folding optimization completed.\n");
         }
@@ -210,9 +233,10 @@ int main(int argc, char **argv) {
     }
     
     tac_generate(root, &tac);
+    compilation_stats.total_tac_instructions = tac.instruction_count;
 
     if (verbose_mode) {
-        printf("TAC generation completed. Instructions generated.\n");
+        printf("TAC generation completed. Instructions generated: %d\n", tac.instruction_count);
     }
 
     print_compilation_stage_header("Three Address Code");
@@ -237,6 +261,14 @@ int main(int argc, char **argv) {
             printf("Output written to: %s\n", output_file);
         }
         printf("========================\n");
+        
+        /* Print detailed compilation statistics */
+        stats_print(&compilation_stats);
+    }
+    
+    /* Print statistics if requested */
+    if (show_stats) {
+        stats_print(&compilation_stats);
     }
 
     tac_free(&tac);

@@ -36,6 +36,59 @@ typedef enum {
     ERR_SEMANTIC_ASSIGNMENT_INCOMPATIBLE = 3009
 } ErrorCode;
 
+/* Compilation statistics structure */
+typedef struct {
+    int total_tokens;              /* Total number of tokens generated */
+    int total_ast_nodes;           /* Total number of AST nodes created */
+    int total_symbols;             /* Total number of symbols in symbol table */
+    int total_scopes;              /* Total number of scopes entered */
+    int total_tac_instructions;   /* Total number of TAC instructions */
+    int constant_folds;           /* Number of constant folding optimizations */
+    int source_lines;             /* Number of lines in source code */
+    int source_characters;        /* Number of characters in source code */
+    int lexical_errors;           /* Number of lexical errors */
+    int syntax_errors;            /* Number of syntax errors */
+    int semantic_errors;          /* Number of semantic errors */
+} CompilationStats;
+
+/* Initialize compilation statistics structure */
+static inline void stats_init(CompilationStats *stats) {
+    stats->total_tokens = 0;
+    stats->total_ast_nodes = 0;
+    stats->total_symbols = 0;
+    stats->total_scopes = 0;
+    stats->total_tac_instructions = 0;
+    stats->constant_folds = 0;
+    stats->source_lines = 0;
+    stats->source_characters = 0;
+    stats->lexical_errors = 0;
+    stats->syntax_errors = 0;
+    stats->semantic_errors = 0;
+}
+
+/* Print compilation statistics */
+static inline void stats_print(const CompilationStats *stats) {
+    printf("\n=== Compilation Statistics ===\n");
+    printf("Source Code:\n");
+    printf("  Lines: %d\n", stats->source_lines);
+    printf("  Characters: %d\n", stats->source_characters);
+    printf("\nLexical Analysis:\n");
+    printf("  Tokens generated: %d\n", stats->total_tokens);
+    printf("  Lexical errors: %d\n", stats->lexical_errors);
+    printf("\nSyntax Analysis:\n");
+    printf("  AST nodes created: %d\n", stats->total_ast_nodes);
+    printf("  Syntax errors: %d\n", stats->syntax_errors);
+    printf("\nSemantic Analysis:\n");
+    printf("  Symbols declared: %d\n", stats->total_symbols);
+    printf("  Scopes entered: %d\n", stats->total_scopes);
+    printf("  Semantic errors: %d\n", stats->semantic_errors);
+    printf("\nOptimization:\n");
+    printf("  Constant folds: %d\n", stats->constant_folds);
+    printf("\nCode Generation:\n");
+    printf("  TAC instructions: %d\n", stats->total_tac_instructions);
+    printf("=============================\n");
+}
+
 static inline const char *type_to_string(DataType type) {
     switch (type) {
         case TYPE_INT: return "int";
