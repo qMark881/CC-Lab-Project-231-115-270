@@ -14,6 +14,7 @@
 static bool verbose_mode = false;
 static char *output_file = NULL;
 static bool show_stats = false;
+static bool format_source = false;
 static CompilationStats compilation_stats;
 
 static void print_usage(const char *prog) {
@@ -24,6 +25,7 @@ static void print_usage(const char *prog) {
     fprintf(stderr, "  --verbose, -V       Enable verbose output with detailed compilation information\n");
     fprintf(stderr, "  --output, -o <file> Specify output file for compilation results\n");
     fprintf(stderr, "  --stats, -S        Print compilation statistics\n");
+    fprintf(stderr, "  --format, -F       Format and pretty-print source code\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "The compiler accepts plain source files and Markdown files with a fenced C code block.\n");
     fprintf(stderr, "Use '-' to read source from standard input.\n");
@@ -55,6 +57,87 @@ static char *load_source_text(const char *input_path) {
     char *source = extract_code_block(raw);
     free(raw);
     return source;
+}
+
+/* Simple source code formatter - adds consistent indentation and spacing */
+static void format_source_code(const char *source) {
+    if (!source) return;
+    
+    printf("=== Formatted Source Code ===\n");
+    
+    int indent_level = 0;
+    bool in_block = false;
+    
+    for (size_t i = 0; i < strlen(source); i++) {
+        char c = source[i];
+        
+        /* Handle braces for indentation */
+        if (c == '{') {
+            putchar('\n');
+            for (int j = 0; j < indent_level; j++) {
+                putchar(' ');
+                putchar(' ');
+            }
+            putchar('{');
+            putchar('\n');
+            indent_level++;
+            in_block = true;
+            continue;
+        }
+        
+        if (c == '}') {
+            indent_level--;
+            if (indent_level < 0) indent_level = 0;
+            putchar('\n');
+            for (int j = 0; j < indent_level; j++) {
+                putchar(' ');
+                putchar(' ');
+            }
+            putchar('}');
+            putchar('\n');
+            in_block = false;
+            continue;
+        }
+        
+        /* Handle semicolons */
+        if (c == ';') {
+            putchar(';');
+            putchar('\n');
+            if (in_block) {
+                for (int j = 0; j < indent_level; j++) {
+                    putchar(' ');
+                    putchar(' ');
+                }
+            }
+            continue;
+        }
+        
+        /* Skip excessive whitespace */
+        if (c == ' ' || c == '\t') {
+            /* Check if this is meaningful whitespace */
+            if (i > 0 && source[i-1] != ' ' && source[i-1] != '\t' && 
+                i < strlen(source)-1 && source[i+1] != ' ' && source[i+1] != '\t' &&
+                source[i+1] != '\n' && source[i+1] != ';' && source[i+1] != '{' && source[i+1] != '}') {
+                putchar(' ');
+            }
+            continue;
+        }
+        
+        /* Handle newlines */
+        if (c == '\n') {
+            if (in_block) {
+                for (int j = 0; j < indent_level; j++) {
+                    putchar(' ');
+                    putchar(' ');
+                }
+            }
+            continue;
+        }
+        
+        putchar(c);
+    }
+    
+    printf("\n=== End Formatted Source ===\n");
 }
 
 int main(int argc, char **argv) {
@@ -92,6 +175,11 @@ int main(int argc, char **argv) {
         }
         if (strcmp(argv[i], "--stats") == 0 || strcmp(argv[i], "-S") == 0) {
             show_stats = true;
+            source_arg = i + 1;
+            continue;
+        }
+        if (strcmp(argv[i], "--format") == 0 || strcmp(argv[i], "-F") == 0) {
+            format_source = true;
             source_arg = i + 1;
             continue;
         }
@@ -137,6 +225,13 @@ int main(int argc, char **argv) {
         if (source[i] == '\n') line_count++;
     }
     compilation_stats.source_lines = line_count;
+
+    if (format_source) {
+        printf("Formatting source code...\n");
+        format_source_code(source);
+        printf("Source code formatting completed.\n");
+        return EXIT_SUCCESS;
+    }
 
     if (verbose_mode) {
         printf("Source code loaded (%zu bytes, %d lines)\n", strlen(source), line_count);
