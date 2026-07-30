@@ -60,7 +60,7 @@ static char *load_source_text(const char *input_path) {
     return source;
 }
 
-/* Simple source code formatter - adds consistent indentation and spacing */
+/* Enhanced source code formatter with better formatting rules */
 static void format_source_code(const char *source) {
     if (!source) return;
     
@@ -68,21 +68,26 @@ static void format_source_code(const char *source) {
     
     int indent_level = 0;
     bool in_block = false;
+    bool after_operator = false;
+    bool after_keyword = false;
     
     for (size_t i = 0; i < strlen(source); i++) {
         char c = source[i];
+        char prev = (i > 0) ? source[i-1] : '\0';
+        char next = (i < strlen(source)-1) ? source[i+1] : '\0';
         
         /* Handle braces for indentation */
         if (c == '{') {
-            putchar('\n');
-            for (int j = 0; j < indent_level; j++) {
-                putchar(' ');
-                putchar(' ');
-            }
+            putchar(' ');
             putchar('{');
             putchar('\n');
             indent_level++;
             in_block = true;
+            /* Add indentation for next line */
+            for (int j = 0; j < indent_level; j++) {
+                putchar(' ');
+                putchar(' ');
+            }
             continue;
         }
         
@@ -110,6 +115,75 @@ static void format_source_code(const char *source) {
                     putchar(' ');
                 }
             }
+            after_operator = false;
+            after_keyword = false;
+            continue;
+        }
+        
+        /* Handle operators with spacing */
+        if (c == '=' || c == '+' || c == '-' || c == '*' || c == '/' || c == '%') {
+            /* Add space before operator if needed */
+            if (prev != ' ' && prev != '\t' && prev != '\n' && prev != '(' && !after_operator) {
+                putchar(' ');
+            }
+            putchar(c);
+            /* Add space after operator if needed */
+            if (next != ' ' && next != '\t' && next != '\n' && next != ';' && next != ')') {
+                putchar(' ');
+            }
+            after_operator = true;
+            continue;
+        }
+        
+        /* Handle comparison operators */
+        if (c == '<' || c == '>' || c == '!') {
+            if (next == '=' || (c == '<' && next == '<') || (c == '>' && next == '>')) {
+                /* Two-character operator */
+                if (prev != ' ' && prev != '\t' && prev != '\n') {
+                    putchar(' ');
+                }
+                putchar(c);
+                /* Next character will be handled in next iteration */
+                after_operator = true;
+                continue;
+            }
+            if (prev != ' ' && prev != '\t' && prev != '\n' && !after_operator) {
+                putchar(' ');
+            }
+            putchar(c);
+            if (next != ' ' && next != '\t' && next != '\n' && next != ';') {
+                putchar(' ');
+            }
+            after_operator = true;
+            continue;
+        }
+        
+        /* Handle logical operators */
+        if (c == '&' || c == '|') {
+            if ((c == '&' && next == '&') || (c == '|' && next == '|')) {
+                /* Two-character logical operator */
+                if (prev != ' ' && prev != '\t' && prev != '\n' && !after_operator) {
+                    putchar(' ');
+                }
+                putchar(c);
+                after_operator = true;
+                continue;
+            }
+        }
+        
+        /* Handle parentheses */
+        if (c == '(') {
+            if (prev != ' ' && prev != '\t' && prev != '\n' && prev != '(' && !after_keyword) {
+                putchar(' ');
+            }
+            putchar('(');
+            after_operator = false;
+            continue;
+        }
+        
+        if (c == ')') {
+            putchar(')');
+            after_operator = false;
             continue;
         }
         
@@ -132,10 +206,31 @@ static void format_source_code(const char *source) {
                     putchar(' ');
                 }
             }
+            after_operator = false;
+            after_keyword = false;
             continue;
         }
         
+        /* Check for keywords */
+        if (isalpha((unsigned char)c)) {
+            /* Check if this starts a keyword */
+            const char *keywords[] = {"int", "float", "bool", "if", "else", "while", "print", "true", "false"};
+            for (size_t k = 0; k < sizeof(keywords)/sizeof(keywords[0]); k++) {
+                if (strncmp(&source[i], keywords[k], strlen(keywords[k])) == 0) {
+                    if (i > 0 && source[i-1] != ' ' && source[i-1] != '\t' && source[i-1] != '\n') {
+                        putchar(' ');
+                    }
+                    after_keyword = true;
+                    break;
+                }
+            }
+        }
+        
         putchar(c);
+        after_operator = false;
+        if (!isalpha((unsigned char)c)) {
+            after_keyword = false;
+        }
     }
     
     printf("\n=== End Formatted Source ===\n");
