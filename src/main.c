@@ -11,6 +11,7 @@
 #include <math.h>
 
 #define COMPILER_VERSION "ZorvLabs Mini Compiler 2.0"
+#define COMPILER_NAME "ZorvLabs Compiler"
 
 static bool verbose_mode = false;
 static char *output_file = NULL;
@@ -18,6 +19,7 @@ static bool show_stats = false;
 static bool format_source = false;
 static bool json_output = false;
 static bool csv_output = false;
+static bool show_logo = false;
 static CompilationStats compilation_stats;
 
 static void print_usage(const char *prog) {
@@ -25,6 +27,7 @@ static void print_usage(const char *prog) {
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  --help, -h         Show this help message\n");
     fprintf(stderr, "  --version, -v      Show compiler version\n");
+    fprintf(stderr, "  --logo, -L         Display compiler logo and branding\n");
     fprintf(stderr, "  --verbose, -V       Enable verbose output with detailed compilation information\n");
     fprintf(stderr, "  --output, -o <file> Specify output file for compilation results\n");
     fprintf(stderr, "  --stats, -S        Print compilation statistics\n");
@@ -34,6 +37,46 @@ static void print_usage(const char *prog) {
     fprintf(stderr, "\n");
     fprintf(stderr, "The compiler accepts plain source files and Markdown files with a fenced C code block.\n");
     fprintf(stderr, "Use '-' to read source from standard input.\n");
+}
+
+/* Display compiler logo and branding information */
+static void print_logo(void) {
+    printf("\n");
+    printf("╔════════════════════════════════════════════════════════════════╗\n");
+    printf("║  ____  _   _ ____  _    _ _   _    ____ ____  ___  _   _ ___   ║\n");
+    printf("║ |  _ \\| | | |  _ \\| |  | | | | |  / ___|  _ \\/ _ \\| | | | __|  ║\n");
+    printf("║ | | | | | | | | | | |  | | | | | | |   | |_) | | | | | | | |_   ║\n");
+    printf("║ | |_| | |_| | |_| | |__| | |_| | | |___|  _ <| |_| | |_| |  _|  ║\n");
+    printf("║ |____/ \\___/|____/|____/ \\___/   \\____|_| \\_\\\\___/ \\___/|_|    ║\n");
+    printf("║                                                                ║\n");
+    printf("║                    ____  ____  ___    _   _ _                  ║\n");
+    printf("║                   / ___||  _ \\|_ _|  | | | | |                 ║\n");
+    printf("║                   \\___ \\| |_) || |   | | | | |                 ║\n");
+    printf("║                    ___) |  _ < | |   | |_| | |___              ║\n");
+    printf("║                   |____/|_| \\_\\___|   \\___/|_____|             ║\n");
+    printf("║                                                                ║\n");
+    printf("║                       MINI COMPILER v2.0                       ║\n");
+    printf("║                   Advanced Compiler Technology                  ║\n");
+    printf("╚════════════════════════════════════════════════════════════════╝\n");
+    printf("\n");
+    printf("Features:\n");
+    printf("  • Lexical Analysis with Token Generation\n");
+    printf("  • Syntax Analysis with AST Construction\n");
+    printf("  • Semantic Analysis with Type Checking\n");
+    printf("  • Symbol Table with Nested Scope Support\n");
+    printf("  • Three Address Code (TAC) Generation\n");
+    printf("  • Constant Folding Optimization\n");
+    printf("  • Dead Code Elimination\n");
+    printf("  • Error Reporting with Error Codes\n");
+    printf("  • Warning System for Code Quality\n");
+    printf("  • Source Code Formatting\n");
+    printf("  • IR Validation and Consistency Checks\n");
+    printf("  • Comprehensive Statistics Collection\n");
+    printf("  • Symbol Conflict Detection\n");
+    printf("\n");
+    printf("Version: %s\n", COMPILER_VERSION);
+    printf("Built: " __DATE__ " " __TIME__ "\n");
+    printf("\n");
 }
 
 static void print_compilation_stage_header(const char *title) {
@@ -293,6 +336,11 @@ int main(int argc, char **argv) {
             source_arg = i + 1;
             continue;
         }
+        if (strcmp(argv[i], "--logo") == 0 || strcmp(argv[i], "-L") == 0) {
+            show_logo = true;
+            source_arg = i + 1;
+            continue;
+        }
         if (argv[i][0] != '-') {
             source_arg = i;
             break;
@@ -302,6 +350,11 @@ int main(int argc, char **argv) {
     if (source_arg >= argc) {
         print_usage(argv[0]);
         return EXIT_FAILURE;
+    }
+
+    if (show_logo) {
+        print_logo();
+        return EXIT_SUCCESS;
     }
 
     if (verbose_mode) {
