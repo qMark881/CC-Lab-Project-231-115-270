@@ -389,6 +389,9 @@ int main(int argc, char **argv) {
         if (source[i] == '\n') line_count++;
     }
     compilation_stats.source_lines = line_count;
+    
+    /* Track source file dependency */
+    compilation_stats.dependency_count = 1; /* Main source file */
 
     if (format_source) {
         printf("Formatting source code...\n");

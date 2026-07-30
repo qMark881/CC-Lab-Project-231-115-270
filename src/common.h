@@ -97,6 +97,8 @@ typedef struct {
     double codegen_speed;         /* Instructions per second during codegen */
     size_t total_memory_allocated; /* Total memory allocated in bytes */
     size_t peak_memory_usage;      /* Peak memory usage in bytes */
+    int dependency_count;          /* Number of source file dependencies */
+    char **dependency_files;       /* Array of dependency file names */
 } CompilationStats;
 
 /* Initialize compilation statistics structure */
@@ -124,6 +126,7 @@ static inline void stats_init(CompilationStats *stats) {
     stats->codegen_speed = 0.0;
     stats->total_memory_allocated = 0;
     stats->peak_memory_usage = 0;
+    stats->dependency_count = 0;
 }
 
 /* Print compilation statistics */
@@ -163,6 +166,8 @@ static inline void stats_print(const CompilationStats *stats) {
     printf("  Total allocated: %zu bytes\n", stats->total_memory_allocated);
     printf("  Peak usage: %zu bytes\n", stats->peak_memory_usage);
     printf("  Memory efficiency: %.2f MB/s\n", stats->total_time > 0 ? (double)stats->peak_memory_usage / (1024*1024) / stats->total_time : 0.0);
+    printf("\nDependencies:\n");
+    printf("  Source files processed: %d\n", stats->dependency_count);
     printf("=============================\n");
 }
 
