@@ -2,6 +2,7 @@
 #include "parser/parser.h"
 #include "semantic/semantic.h"
 #include "tac/tac.h"
+#include "symbol_table/symbol_table.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -467,6 +468,12 @@ int main(int argc, char **argv) {
         if (sem.warning_count > 0) {
             printf("Warnings generated: %d\n", sem.warning_count);
             semantic_print_warnings(&sem);
+        }
+        
+        /* Print cross-reference information in verbose mode */
+        if (verbose_mode) {
+            printf("=== Symbol Cross-Reference Information ===\n");
+            symtab_print_cross_references(&sem.table);
         }
     }
 

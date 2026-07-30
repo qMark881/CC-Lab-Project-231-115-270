@@ -73,6 +73,8 @@ static DataType lookup_identifier(ASTNode *node, SemanticContext *ctx) {
     Symbol *sym = symtab_lookup_active(&ctx->table, node->text);
     if (sym) {
         node->data_type = sym->type;
+        /* Record variable usage */
+        symtab_record_usage(&ctx->table, node->text, node->line);
         return sym->type;
     }
     Symbol *any = symtab_lookup_any(&ctx->table, node->text);
@@ -290,6 +292,9 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
                 }
                 break;
             }
+            
+            /* Record variable usage */
+            symtab_record_usage(&ctx->table, id->text, node->line);
             DataType rhs_type = analyze_expr(rhs, ctx);
             if (!assignment_compatible(sym->type, rhs_type)) {
                 if (sym->type == TYPE_INT && rhs_type == TYPE_BOOL) {

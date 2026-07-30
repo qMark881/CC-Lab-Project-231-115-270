@@ -10,6 +10,9 @@ typedef struct Symbol {
     int declared_line;
     int scope_level;
     bool active;
+    int usage_count;              /* Number of times variable is used */
+    int *usage_lines;            /* Array of line numbers where variable is used */
+    int usage_capacity;          /* Capacity of usage_lines array */
     struct Symbol *next;
 } Symbol;
 
@@ -43,5 +46,11 @@ int symtab_find_conflicts(const SymbolTable *table, SymbolConflict *conflicts, i
 
 /* Print symbol conflict information */
 void symtab_print_conflicts(const SymbolConflict *conflicts, int count);
+
+/* Record variable usage at a specific line */
+void symtab_record_usage(SymbolTable *table, const char *name, int line);
+
+/* Print cross-reference information for all symbols */
+void symtab_print_cross_references(const SymbolTable *table);
 
 #endif

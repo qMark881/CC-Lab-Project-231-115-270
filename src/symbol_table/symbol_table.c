@@ -14,6 +14,7 @@ void symtab_destroy(SymbolTable *table) {
     while (sym) {
         Symbol *next = sym->next;
         free(sym->name);
+        free(sym->usage_lines);
         free(sym);
         sym = next;
     }
@@ -58,6 +59,9 @@ bool symtab_insert(SymbolTable *table, const char *name, DataType type, int line
     sym->declared_line = line;
     sym->scope_level = table->current_scope;
     sym->active = true;
+    sym->usage_count = 0;
+    sym->usage_lines = NULL;
+    sym->usage_capacity = 0;
     sym->next = table->symbols;
     table->symbols = sym;
     return true;
@@ -177,4 +181,68 @@ void symtab_print_conflicts(const SymbolConflict *conflicts, int count) {
     }
     
     printf("=================================\n");
+}
+
+/* Record variable usage at a specific line */
+void symtab_record_usage(SymbolTable *table, const char *name, int line) {
+    Symbol *sym = symtab_lookup_active(table, name);
+    if (!sym) return;
+    
+    /* Expand usage_lines array if needed */
+    if (sym->usage_count >= sym->usage_capacity) {
+        int new_capacity = sym->usage_capacity == 0 ? 4 : sym->usage_capacity * 2;
+        sym->usage_lines = (int *)xrealloc(sym->usage_lines, new_capacity * sizeof(int));
+        sym->usage_capacity = new_capacity;
+    }
+    
+    /* Add usage line if not already recorded */
+    bool already_recorded = false;
+    for (int i = 0; i < sym->usage_count; i++) {
+        if (sym->usage_lines[i] == line) {
+            already_recorded = true;
+            break;
+        }
+    }
+    
+    if (!already_recorded) {
+        sym->usage_lines[sym->usage_count++] = line;
+    }
+}
+
+/* Print cross-reference information for all symbols */
+void symtab_print_cross_references(const SymbolTable *table) {
+    printf("=== Symbol Cross-Reference Information ===\n");
+    printf("Scope Level: %d\n", table->current_scope);
+    printf("\n");
+    
+    bool found = false;
+    for (Symbol *sym = table->symbols; sym; sym = sym->next) {
+        if (sym->active) {
+            printf("Symbol: %s\n", sym->name);
+            printf("  Type: %s\n", type_to_string(sym->type));
+            printf("  Declared at line: %d\n", sym->declared_line);
+            printf("  Scope level: %d\n", sym->scope_level);
+            printf("  Usage count: %d\n", sym->usage_count);
+            
+            if (sym->usage_count > 0) {
+                printf("  Used at lines: ");
+                for (int i = 0; i < sym->usage_count; i++) {
+                    printf("%d", sym->usage_lines[i]);
+                    if (i < sym->usage_count - 1) printf(", ");
+                }
+                printf("\n");
+            } else {
+                printf("  Warning: Variable declared but never used\n");
+            }
+            
+            printf("\n");
+            found = true;
+        }
+    }
+    
+    if (!found) {
+        printf("No active symbols found.\n");
+    }
+    
+    printf("==========================================\n");
 }
