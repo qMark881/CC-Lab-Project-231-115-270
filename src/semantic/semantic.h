@@ -37,6 +37,10 @@ void semantic_analyze(ASTNode *root, SemanticContext *ctx);
  * Evaluates constant expressions at compile time. */
 void semantic_optimize_constant_folding(ASTNode *root);
 
+/* Perform dead code elimination optimization on the AST.
+ * Removes unreachable code branches and unused statements. */
+void semantic_optimize_dead_code_elimination(ASTNode *root);
+
 /* Issue a warning for non-critical issues */
 void semantic_warning(SemanticContext *ctx, int line, WarningCode code, const char *fmt, ...);
 

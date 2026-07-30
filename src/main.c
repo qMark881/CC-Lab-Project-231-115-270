@@ -418,6 +418,19 @@ int main(int argc, char **argv) {
             printf("Constant folding optimization completed.\n");
             printf("Optimization time: %.3f seconds\n", compilation_stats.optimization_time);
         }
+        
+        /* Apply dead code elimination optimization */
+        if (verbose_mode) {
+            printf("=== Starting Dead Code Elimination Optimization ===\n");
+        }
+        clock_t dce_start = clock();
+        semantic_optimize_dead_code_elimination(root);
+        clock_t dce_end = clock();
+        compilation_stats.optimization_time += (double)(dce_end - dce_start) / CLOCKS_PER_SEC;
+        if (verbose_mode) {
+            printf("Dead code elimination optimization completed.\n");
+            printf("Total optimization time: %.3f seconds\n", compilation_stats.optimization_time);
+        }
     }
 
     if (semantic_errors > 0) {
