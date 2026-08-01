@@ -11,8 +11,8 @@
 #include <ctype.h>
 #include <math.h>
 
-#define COMPILER_VERSION "ZorvLabs Mini Compiler 2.0"
-#define COMPILER_NAME "ZorvLabs Compiler"
+#define COMPILER_VERSION "CC Lab Mini Compiler 2.0"
+#define COMPILER_NAME "CC Lab Mini Compiler"
 
 static bool verbose_mode = false;
 static char *output_file = NULL;
@@ -286,188 +286,154 @@ static void format_source_code(const char *source) {
     printf("\n=== End Formatted Source ===\n");
 }
 
-int main(int argc, char **argv) {
-    if (argc < 2) {
-        print_usage(argv[0]);
-        return EXIT_FAILURE;
+static int count_source_lines(const char *source) {
+    if (!source || source[0] == '\0') return 0;
+    int lines = 1;
+    for (const char *cursor = source; *cursor; ++cursor) {
+        if (*cursor == '\n') lines++;
     }
+    return lines;
+}
 
-    /* Parse command line options */
-    int source_arg = 1;
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+static void print_profile_summary(const CompilationStats *stats) {
+    printf("\nPerformance Profile\n");
+    printf("-------------------\n");
+    printf("Mode: %s\n", profile_mode_to_string(profile_mode));
+    printf("Total: %.6f s\n", stats->total_time);
+    if (profile_mode >= PROFILE_DETAILED) {
+        printf("Lexer: %.6f s\n", stats->lexical_time);
+        printf("Parser/AST: %.6f s\n", stats->syntax_time);
+        printf("Semantic: %.6f s\n", stats->semantic_time);
+        printf("TAC generation: %.6f s\n", stats->codegen_time);
+    }
+    if (profile_mode >= PROFILE_FULL) {
+        printf("Tokens: %d\n", stats->total_tokens);
+        printf("AST nodes: %d\n", stats->total_ast_nodes);
+        printf("Symbols: %d\n", stats->total_symbols);
+        printf("TAC instructions: %d\n", stats->total_tac_instructions);
+        printf("Tracked allocation volume: %zu bytes\n", stats->total_memory_allocated);
+    }
+}
+
+int main(int argc, char **argv) {
+    const char *source_path = NULL;
+
+    for (int i = 1; i < argc; ++i) {
+        const char *arg = argv[i];
+        if (strcmp(arg, "--help") == 0 || strcmp(arg, "-h") == 0) {
             print_usage(argv[0]);
             return EXIT_SUCCESS;
-        }
-        if (strcmp(argv[i], "--version") == 0 || strcmp(argv[i], "-v") == 0) {
+        } else if (strcmp(arg, "--version") == 0 || strcmp(arg, "-v") == 0) {
             puts(COMPILER_VERSION);
             return EXIT_SUCCESS;
-        }
-        if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-V") == 0) {
-            verbose_mode = true;
-            source_arg = i + 1;
-            continue;
-        }
-        if (strcmp(argv[i], "--output") == 0 || strcmp(argv[i], "-o") == 0) {
-            if (i + 1 < argc) {
-                output_file = argv[i + 1];
-                i++; // Skip the next argument as it's the output file
-                source_arg = i + 1;
-                continue;
-            } else {
-                fprintf(stderr, "Error: --output requires a file argument\n");
-                return EXIT_FAILURE;
-            }
-        }
-        if (strcmp(argv[i], "--stats") == 0 || strcmp(argv[i], "-S") == 0) {
-            show_stats = true;
-            source_arg = i + 1;
-            continue;
-        }
-        if (strcmp(argv[i], "--format") == 0 || strcmp(argv[i], "-F") == 0) {
-            format_source = true;
-            source_arg = i + 1;
-            continue;
-        }
-        if (strcmp(argv[i], "--json") == 0 || strcmp(argv[i], "-J") == 0) {
-            json_output = true;
-            source_arg = i + 1;
-            continue;
-        }
-        if (strcmp(argv[i], "--csv") == 0 || strcmp(argv[i], "-C") == 0) {
-            csv_output = true;
-            source_arg = i + 1;
-            continue;
-        }
-        if (strcmp(argv[i], "--logo") == 0 || strcmp(argv[i], "-L") == 0) {
+        } else if (strcmp(arg, "--logo") == 0 || strcmp(arg, "-L") == 0) {
             show_logo = true;
-            source_arg = i + 1;
-            continue;
-        }
-        if (strcmp(argv[i], "--profile") == 0 || strcmp(argv[i], "-P") == 0) {
-            if (i + 1 < argc) {
-                const char *mode_str = argv[i + 1];
-                if (strcmp(mode_str, "none") == 0) {
-                    profile_mode = PROFILE_NONE;
-                } else if (strcmp(mode_str, "basic") == 0) {
-                    profile_mode = PROFILE_BASIC;
-                } else if (strcmp(mode_str, "detailed") == 0) {
-                    profile_mode = PROFILE_DETAILED;
-                } else if (strcmp(mode_str, "full") == 0) {
-                    profile_mode = PROFILE_FULL;
-                } else {
-                    fprintf(stderr, "Error: invalid profile mode '%s'\n", mode_str);
-                    return EXIT_FAILURE;
-                }
-                i++; // Skip the next argument
-                source_arg = i + 1;
-                continue;
-            } else {
-                fprintf(stderr, "Error: --profile requires a mode argument\n");
+        } else if (strcmp(arg, "--verbose") == 0 || strcmp(arg, "-V") == 0) {
+            verbose_mode = true;
+        } else if (strcmp(arg, "--stats") == 0 || strcmp(arg, "-S") == 0) {
+            show_stats = true;
+        } else if (strcmp(arg, "--format") == 0 || strcmp(arg, "-F") == 0) {
+            format_source = true;
+        } else if (strcmp(arg, "--json") == 0 || strcmp(arg, "-J") == 0) {
+            json_output = true;
+            show_stats = true;
+        } else if (strcmp(arg, "--csv") == 0 || strcmp(arg, "-C") == 0) {
+            csv_output = true;
+            show_stats = true;
+        } else if (strcmp(arg, "--output") == 0 || strcmp(arg, "-o") == 0) {
+            if (++i >= argc) {
+                fprintf(stderr, "Error: %s requires a file path.\n", arg);
                 return EXIT_FAILURE;
             }
+            output_file = argv[i];
+        } else if (strcmp(arg, "--profile") == 0 || strcmp(arg, "-P") == 0) {
+            if (++i >= argc) {
+                fprintf(stderr, "Error: %s requires none, basic, detailed, or full.\n", arg);
+                return EXIT_FAILURE;
+            }
+            const char *mode = argv[i];
+            if (strcmp(mode, "none") == 0) profile_mode = PROFILE_NONE;
+            else if (strcmp(mode, "basic") == 0) profile_mode = PROFILE_BASIC;
+            else if (strcmp(mode, "detailed") == 0) profile_mode = PROFILE_DETAILED;
+            else if (strcmp(mode, "full") == 0) profile_mode = PROFILE_FULL;
+            else {
+                fprintf(stderr, "Error: invalid profile mode '%s'.\n", mode);
+                return EXIT_FAILURE;
+            }
+        } else if (strcmp(arg, "-") == 0 || arg[0] != '-') {
+            if (source_path) {
+                fprintf(stderr, "Error: provide exactly one source file.\n");
+                return EXIT_FAILURE;
+            }
+            source_path = arg;
+        } else {
+            fprintf(stderr, "Error: unknown option '%s'.\n", arg);
+            print_usage(argv[0]);
+            return EXIT_FAILURE;
         }
-        if (argv[i][0] != '-') {
-            source_arg = i;
-            break;
-        }
-    }
-
-    if (source_arg >= argc) {
-        print_usage(argv[0]);
-        return EXIT_FAILURE;
     }
 
     if (show_logo) {
         print_logo();
-        return EXIT_SUCCESS;
+        if (!source_path) return EXIT_SUCCESS;
     }
-
-    if (verbose_mode) {
-        printf("=== Verbose Mode Enabled ===\n");
-        printf("Compiler: %s\n", COMPILER_VERSION);
-        printf("Source file: %s\n", argv[source_arg]);
-        if (output_file) {
-            printf("Output file: %s\n", output_file);
-        } else {
-            printf("Output: stdout\n");
-        }
-        printf("Profile mode: %s\n", profile_mode_to_string(profile_mode));
-        printf("==============================\n\n");
+    if (!source_path) {
+        print_usage(argv[0]);
+        return EXIT_FAILURE;
     }
-    
-    /* Print profiling header if profiling is enabled */
-    if (profile_mode != PROFILE_NONE) {
-        printf("=== Performance Profiling Mode: %s ===\n", profile_mode_to_string(profile_mode));
-        printf("Profiling started...\n\n");
-    }
-
-    /* Initialize compilation statistics */
-    stats_init(&compilation_stats);
-    
-    /* Start total compilation timer */
-    clock_t start_time = clock();
-
-    char *source = load_source_text(argv[source_arg]);
-    if (!source) {
-        fprintf(stderr, "Error: could not open input source '%s'\n", argv[source_arg]);
+    if (json_output && csv_output) {
+        fprintf(stderr, "Error: --json and --csv are mutually exclusive.\n");
         return EXIT_FAILURE;
     }
 
-    /* Collect source code statistics */
-    compilation_stats.source_characters = (int)strlen(source);
-    int line_count = 0;
-    for (size_t i = 0; i < strlen(source); i++) {
-        if (source[i] == '\n') line_count++;
+    reset_memory_tracking();
+    stats_init(&compilation_stats);
+    clock_t total_start = clock();
+
+    char *source = load_source_text(source_path);
+    if (!source) {
+        fprintf(stderr, "Error: could not read '%s'.\n", source_path);
+        return EXIT_FAILURE;
     }
-    compilation_stats.source_lines = line_count;
-    
-    /* Track source file dependency */
-    compilation_stats.dependency_count = 1; /* Main source file */
+    compilation_stats.source_characters = (int)strlen(source);
+    compilation_stats.source_lines = count_source_lines(source);
+    compilation_stats.dependency_count = 1;
 
     if (format_source) {
-        printf("Formatting source code...\n");
         format_source_code(source);
-        printf("Source code formatting completed.\n");
+        free(source);
         return EXIT_SUCCESS;
     }
 
     if (verbose_mode) {
-        printf("Source code loaded (%zu bytes, %d lines)\n", strlen(source), line_count);
-        printf("=== Source Code ===\n%s\n=== End Source ===\n\n", source);
+        printf("Compiler: %s\n", COMPILER_VERSION);
+        printf("Input: %s (%d lines, %d characters)\n", source_path,
+               compilation_stats.source_lines, compilation_stats.source_characters);
     }
 
     Parser parser;
     parser_init(&parser, source);
-    
-    if (verbose_mode) {
-        printf("=== Starting Lexical and Syntax Analysis ===\n");
-    }
-    
-    clock_t syntax_start = clock();
+    clock_t parse_start = clock();
     ASTNode *root = parse_program(&parser);
-    clock_t syntax_end = clock();
-    compilation_stats.syntax_time = (double)(syntax_end - syntax_start) / CLOCKS_PER_SEC;
-    
+    double parse_total = (double)(clock() - parse_start) / CLOCKS_PER_SEC;
+
     int parser_errors = parser.error_count;
-    compilation_stats.syntax_errors = parser_errors;
-    compilation_stats.lexical_errors = parser.error_count; /* Combined for now */
+    int lexical_errors = parser.lexical_error_count;
+    int syntax_errors = parser.syntax_error_count;
+    int token_count = parser.token_count;
+    double lexical_time = parser.lexical_time;
     parser_destroy(&parser);
 
-    if (verbose_mode) {
-        printf("Syntax analysis completed. Parser errors: %d\n", parser_errors);
-        printf("Syntax analysis time: %.3f seconds\n", compilation_stats.syntax_time);
-    }
+    compilation_stats.total_tokens = token_count;
+    compilation_stats.lexical_errors = lexical_errors;
+    compilation_stats.syntax_errors = syntax_errors;
+    compilation_stats.lexical_time = lexical_time;
+    compilation_stats.syntax_time = parse_total > lexical_time ? parse_total - lexical_time : 0.0;
+    compilation_stats.total_ast_nodes = (int)ast_count_nodes(root);
 
     if (parser_errors > 0) {
-        fprintf(stderr, "\nCompilation stopped due to syntax/lexical errors.\n");
-        
-        /* Show error context for first error if verbose */
-        if (verbose_mode && source) {
-            fprintf(stderr, "\nError context:\n");
-            print_error_context(source, parser.current.line, 2);
-        }
-        
+        fprintf(stderr, "\nCompilation failed: %d lexical error(s), %d syntax error(s).\n",
+                lexical_errors, syntax_errors);
         ast_free(root);
         free(source);
         return EXIT_FAILURE;
@@ -475,109 +441,55 @@ int main(int argc, char **argv) {
 
     SemanticContext sem;
     semantic_init(&sem);
-    
-    if (verbose_mode) {
-        printf("=== Starting Semantic Analysis ===\n");
-    }
-    
     clock_t semantic_start = clock();
     semantic_analyze(root, &sem);
-    clock_t semantic_end = clock();
-    compilation_stats.semantic_time = (double)(semantic_end - semantic_start) / CLOCKS_PER_SEC;
-    
-    int semantic_errors = sem.error_count;
-    compilation_stats.semantic_errors = semantic_errors;
+    compilation_stats.semantic_time = (double)(clock() - semantic_start) / CLOCKS_PER_SEC;
+    compilation_stats.semantic_errors = sem.error_count;
     compilation_stats.warning_count = sem.warning_count;
+    compilation_stats.total_symbols = sem.table.symbol_count;
+    compilation_stats.total_scopes = sem.table.scopes_entered;
 
-    if (verbose_mode) {
-        printf("Semantic analysis completed. Semantic errors: %d\n", semantic_errors);
-        printf("Semantic analysis time: %.3f seconds\n", compilation_stats.semantic_time);
-        
-        /* Check for symbol conflicts */
-        printf("Checking for symbol conflicts...\n");
-        SymbolConflict conflicts[100];
-        int conflict_count = symtab_find_conflicts(&sem.table, conflicts, 100);
-        compilation_stats.symbol_conflicts = conflict_count;
-        
-        if (conflict_count > 0) {
-            printf("Symbol conflicts detected: %d\n", conflict_count);
-            symtab_print_conflicts(conflicts, conflict_count);
-        } else {
-            printf("No symbol conflicts detected.\n");
-        }
-        
-        /* Print warnings if any */
-        if (sem.warning_count > 0) {
-            printf("Warnings generated: %d\n", sem.warning_count);
-            semantic_print_warnings(&sem);
-        }
-        
-        /* Print cross-reference information in verbose mode */
-        if (verbose_mode) {
-            printf("=== Symbol Cross-Reference Information ===\n");
-            symtab_print_cross_references(&sem.table);
-        }
-    }
-
-    /* Apply constant folding optimization if no semantic errors */
-    if (semantic_errors == 0) {
-        if (verbose_mode) {
-            printf("=== Starting Constant Folding Optimization ===\n");
-        }
-        clock_t opt_start = clock();
-        semantic_optimize_constant_folding(root);
-        clock_t opt_end = clock();
-        compilation_stats.optimization_time = (double)(opt_end - opt_start) / CLOCKS_PER_SEC;
-        compilation_stats.constant_folds = 1; /* Placeholder for actual count */
-        if (verbose_mode) {
-            printf("Constant folding optimization completed.\n");
-            printf("Optimization time: %.3f seconds\n", compilation_stats.optimization_time);
-        }
-        
-        /* Apply dead code elimination optimization */
-        if (verbose_mode) {
-            printf("=== Starting Dead Code Elimination Optimization ===\n");
-        }
-        clock_t dce_start = clock();
-        semantic_optimize_dead_code_elimination(root);
-        clock_t dce_end = clock();
-        compilation_stats.optimization_time += (double)(dce_end - dce_start) / CLOCKS_PER_SEC;
-        if (verbose_mode) {
-            printf("Dead code elimination optimization completed.\n");
-            printf("Total optimization time: %.3f seconds\n", compilation_stats.optimization_time);
-        }
-    }
-
-    if (semantic_errors > 0) {
-        fprintf(stderr, "\nCompilation stopped due to semantic errors.\n");
-        
-        /* Show error context if verbose */
-        if (verbose_mode && source) {
-            fprintf(stderr, "\nError context:\n");
-            print_error_context(source, 1, 2);
-        }
-        
+    if (sem.error_count > 0) {
+        fprintf(stderr, "\nCompilation failed: %d semantic error(s).\n", sem.error_count);
         semantic_destroy(&sem);
         ast_free(root);
         free(source);
         return EXIT_FAILURE;
     }
 
-    if (verbose_mode) {
-        printf("=== Starting Code Generation ===\n");
-    }
+    TacProgram tac;
+    tac_init(&tac);
+    clock_t codegen_start = clock();
+    tac_generate(root, &tac);
+    compilation_stats.codegen_time = (double)(clock() - codegen_start) / CLOCKS_PER_SEC;
+    compilation_stats.total_tac_instructions = (int)tac.count;
+    bool tac_valid = tac_validate(&tac);
 
-    /* Set up output file if specified */
-    FILE *original_stdout = stdout;
+    compilation_stats.total_time = (double)(clock() - total_start) / CLOCKS_PER_SEC;
+    if (compilation_stats.total_time > 0.0) {
+        compilation_stats.parsing_speed =
+            (double)compilation_stats.source_characters / compilation_stats.total_time;
+    }
+    if (compilation_stats.codegen_time > 0.0) {
+        compilation_stats.codegen_speed =
+            (double)compilation_stats.total_tac_instructions / compilation_stats.codegen_time;
+    }
+    compilation_stats.total_memory_allocated = get_total_memory_allocated();
+    compilation_stats.peak_memory_usage = get_peak_memory_usage();
+
+    FILE *saved_stdout = stdout;
+    FILE *redirected_output = NULL;
     if (output_file) {
-        stdout = fopen(output_file, "w");
-        if (!stdout) {
-            fprintf(stderr, "Error: could not open output file '%s'\n", output_file);
+        redirected_output = fopen(output_file, "w");
+        if (!redirected_output) {
+            fprintf(stderr, "Error: could not open output file '%s'.\n", output_file);
+            tac_free(&tac);
+            semantic_destroy(&sem);
             ast_free(root);
             free(source);
-            semantic_destroy(&sem);
             return EXIT_FAILURE;
         }
+        stdout = redirected_output;
     }
 
     print_compilation_stage_header("Abstract Syntax Tree");
@@ -586,147 +498,45 @@ int main(int argc, char **argv) {
     print_compilation_stage_header("Visual AST");
     ast_print_visual(root, "", true);
 
-    print_compilation_stage_header("Readable Summary");
-    ast_print_summary(root, 0);
-
-    if (verbose_mode) {
-        print_compilation_stage_header("Detailed AST Node Information");
-        ast_print_detailed(root);
-    }
-
-    TacProgram tac;
-    tac_init(&tac);
-    
-    if (verbose_mode) {
-        printf("=== Generating Three Address Code ===\n");
-    }
-    
-    clock_t codegen_start = clock();
-    tac_generate(root, &tac);
-    clock_t codegen_end = clock();
-    compilation_stats.codegen_time = (double)(codegen_end - codegen_start) / CLOCKS_PER_SEC;
-    compilation_stats.total_tac_instructions = (int)tac.count;
-
-    if (verbose_mode) {
-        printf("TAC generation completed. Instructions generated: %zu\n", tac.count);
-        printf("Code generation time: %.3f seconds\n", compilation_stats.codegen_time);
-        
-        /* Validate TAC if verbose */
-        printf("Validating TAC...\n");
-        bool tac_valid = tac_validate(&tac);
-        if (tac_valid) {
-            printf("TAC validation: PASSED\n");
-        } else {
-            printf("TAC validation: FAILED (%d errors)\n", tac.validation_errors);
-            tac_print_validation_errors(&tac);
-        }
-    }
+    print_compilation_stage_header("Symbol Table");
+    symtab_print_detailed(&sem.table);
 
     print_compilation_stage_header("Three Address Code");
     tac_print(&tac);
 
-    print_success_footer();
-
-    /* Flush and close output file if specified */
-    fflush(stdout);
-    if (output_file) {
-        fclose(stdout);
-        stdout = original_stdout;
-    }
-
     if (verbose_mode) {
-        printf("=== Compilation Summary ===\n");
-        printf("Total source size: %zu bytes\n", strlen(source));
-        printf("Parser errors: %d\n", parser_errors);
-        printf("Semantic errors: %d\n", semantic_errors);
-        printf("TAC instructions: %d\n", tac.instruction_count);
-        if (output_file) {
-            printf("Output written to: %s\n", output_file);
-        }
-        printf("========================\n");
-        
-        /* Print detailed compilation statistics */
-        stats_print(&compilation_stats);
+        print_compilation_stage_header("Readable AST Summary");
+        ast_print_summary(root, 0);
+        printf("\nTAC validation: %s\n", tac_valid ? "PASSED" : "FAILED");
+        if (!tac_valid) tac_print_validation_errors(&tac);
     }
-    
-    /* Print statistics if requested */
+
+    if (tac_valid) {
+        print_success_footer();
+    } else {
+        print_compilation_stage_header("Compilation Result");
+        puts("Compilation failed because generated TAC did not pass validation.");
+    }
+
     if (show_stats) {
-        if (json_output) {
-            stats_print_json(&compilation_stats);
-        } else if (csv_output) {
-            stats_print_csv(&compilation_stats);
-        } else {
-            stats_print(&compilation_stats);
-        }
+        if (json_output) stats_print_json(&compilation_stats);
+        else if (csv_output) stats_print_csv(&compilation_stats);
+        else stats_print(&compilation_stats);
     }
-    
-    /* Print statistics if requested */
-    if (show_stats) {
-        if (json_output) {
-            stats_print_json(&compilation_stats);
-        } else if (csv_output) {
-            stats_print_csv(&compilation_stats);
-        } else {
-            stats_print(&compilation_stats);
-        }
-    }
-    
-    /* Print profiling summary if profiling is enabled */
     if (profile_mode != PROFILE_NONE) {
-        printf("\n=== Performance Profiling Summary ===\n");
-        printf("Profile mode: %s\n", profile_mode_to_string(profile_mode));
-        printf("Total compilation time: %.3f seconds\n", compilation_stats.total_time);
-        
-        if (profile_mode >= PROFILE_DETAILED) {
-            printf("\nPhase breakdown:\n");
-            printf("  Lexical analysis: %.3f seconds (%.1f%%)\n", 
-                   compilation_stats.lexical_time,
-                   compilation_stats.total_time > 0 ? (compilation_stats.lexical_time / compilation_stats.total_time * 100) : 0);
-            printf("  Syntax analysis: %.3f seconds (%.1f%%)\n",
-                   compilation_stats.syntax_time,
-                   compilation_stats.total_time > 0 ? (compilation_stats.syntax_time / compilation_stats.total_time * 100) : 0);
-            printf("  Semantic analysis: %.3f seconds (%.1f%%)\n",
-                   compilation_stats.semantic_time,
-                   compilation_stats.total_time > 0 ? (compilation_stats.semantic_time / compilation_stats.total_time * 100) : 0);
-            printf("  Optimization: %.3f seconds (%.1f%%)\n",
-                   compilation_stats.optimization_time,
-                   compilation_stats.total_time > 0 ? (compilation_stats.optimization_time / compilation_stats.total_time * 100) : 0);
-            printf("  Code generation: %.3f seconds (%.1f%%)\n",
-                   compilation_stats.codegen_time,
-                   compilation_stats.total_time > 0 ? (compilation_stats.codegen_time / compilation_stats.total_time * 100) : 0);
-        }
-        
-        if (profile_mode >= PROFILE_FULL) {
-            printf("\nPerformance metrics:\n");
-            printf("  Parsing speed: %.2f chars/sec\n", compilation_stats.parsing_speed);
-            printf("  Codegen speed: %.2f instr/sec\n", compilation_stats.codegen_speed);
-            printf("  Memory allocated: %zu bytes\n", compilation_stats.total_memory_allocated);
-            printf("  Peak memory: %zu bytes\n", compilation_stats.peak_memory_usage);
-        }
-        
-        printf("=====================================\n");
+        print_profile_summary(&compilation_stats);
+    }
+
+    fflush(stdout);
+    if (redirected_output) {
+        fclose(redirected_output);
+        stdout = saved_stdout;
+        if (verbose_mode) printf("Output written to: %s\n", output_file);
     }
 
     tac_free(&tac);
     semantic_destroy(&sem);
     ast_free(root);
     free(source);
-    
-    /* Calculate total compilation time */
-    clock_t end_time = clock();
-    compilation_stats.total_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
-    
-    /* Calculate performance metrics */
-    if (compilation_stats.source_characters > 0 && compilation_stats.total_time > 0) {
-        compilation_stats.parsing_speed = (double)compilation_stats.source_characters / compilation_stats.total_time;
-    }
-    if (compilation_stats.total_tac_instructions > 0 && compilation_stats.codegen_time > 0) {
-        compilation_stats.codegen_speed = (double)compilation_stats.total_tac_instructions / compilation_stats.codegen_time;
-    }
-    
-    /* Collect memory usage statistics */
-    compilation_stats.total_memory_allocated = get_total_memory_allocated();
-    compilation_stats.peak_memory_usage = get_peak_memory_usage();
-    
-    return EXIT_SUCCESS;
+    return tac_valid ? EXIT_SUCCESS : EXIT_FAILURE;
 }

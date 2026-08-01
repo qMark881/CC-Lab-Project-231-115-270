@@ -41,5 +41,6 @@ void ast_print_summary(const ASTNode *node, int indent);
 void ast_print_detailed(const ASTNode *node);
 void ast_free(ASTNode *node);
 const char *ast_kind_name(NodeKind kind);
+size_t ast_count_nodes(const ASTNode *node);
 
 #endif

@@ -74,6 +74,9 @@ typedef struct Lexer {
 /* Initialize the lexer with source code */
 void lexer_init(Lexer *lexer, const char *source);
 
+/* Release any internal lexer-owned buffers. */
+void lexer_destroy(Lexer *lexer);
+
 /* Get the next token from the source code */
 Token lexer_next(Lexer *lexer);
 

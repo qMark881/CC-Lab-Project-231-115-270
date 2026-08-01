@@ -1,0 +1,11 @@
+SOURCE: tests/invalid/condition_type_error.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_SEMANTIC_CONDITION_NOT_BOOL] Condition must be bool at line 5: Condition must be boolean
+
+Compilation failed: 1 semantic error(s).

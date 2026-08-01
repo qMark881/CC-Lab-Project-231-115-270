@@ -1,0 +1,11 @@
+SOURCE: tests/invalid/missing_semicolon.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_SYNTAX_MISSING_SEMICOLON] Missing ';' at line 5: Missing semicolon
+
+Compilation failed: 0 lexical error(s), 1 syntax error(s).

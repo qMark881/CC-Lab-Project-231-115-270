@@ -1,0 +1,11 @@
+SOURCE: tests/invalid/lexical_error.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_LEXICAL_INVALID_CHAR] Invalid character '@' at line 5, column 1: Invalid character in source code
+
+Compilation failed: 1 lexical error(s), 0 syntax error(s).

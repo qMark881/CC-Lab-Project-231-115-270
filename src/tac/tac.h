@@ -20,7 +20,7 @@ void tac_init(TacProgram *program);
 void tac_free(TacProgram *program);
 void tac_print(const TacProgram *program);
 void tac_generate(ASTNode *root, TacProgram *program);
-bool tac_validate(const TacProgram *program);
+bool tac_validate(TacProgram *program);
 void tac_print_validation_errors(const TacProgram *program);
 
 #endif

@@ -5,12 +5,27 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <time.h>
 
 /* Advance to the next token by consuming the current token.
  * Frees the current token and gets the next one from the lexer. */
+static Token parser_next_token(Parser *parser) {
+    clock_t start = clock();
+    Token token = lexer_next(&parser->lexer);
+    parser->lexical_time += (double)(clock() - start) / CLOCKS_PER_SEC;
+    return token;
+}
+
+static void parser_record_token(Parser *parser) {
+    if (parser->current.type != TOK_EOF) {
+        parser->token_count++;
+    }
+}
+
 static void parser_advance(Parser *parser) {
     token_free(&parser->current);
-    parser->current = lexer_next(&parser->lexer);
+    parser->current = parser_next_token(parser);
+    parser_record_token(parser);
 }
 
 /* Report a syntax error with formatted message and error code.
@@ -23,7 +38,37 @@ static void parser_error(Parser *parser, int line, ErrorCode code, const char *f
     fprintf(stderr, " at line %d: %s\n", line, error_code_description(code));
     va_end(args);
     parser->error_count++;
+    parser->syntax_error_count++;
     parser->last_error_code = code;
+}
+
+static void parser_lexical_error(Parser *parser) {
+    fprintf(stderr, "%s\n", parser->current.lexeme ? parser->current.lexeme : "Lexical error");
+    parser->error_count++;
+    parser->lexical_error_count++;
+    parser->last_error_code = parser->lexer.pending_error_code != ERR_NONE
+                                  ? parser->lexer.pending_error_code
+                                  : ERR_LEXICAL_INVALID_CHAR;
+}
+
+static bool token_starts_statement(TokenType type) {
+    return type == TOK_INT || type == TOK_FLOAT || type == TOK_BOOL ||
+           type == TOK_ID || type == TOK_IF || type == TOK_WHILE ||
+           type == TOK_PRINT || type == TOK_LBRACE;
+}
+
+/* Panic-mode recovery: stop at a statement boundary without looping forever. */
+static void parser_synchronize(Parser *parser) {
+    if (parser->current.type == TOK_EOF || parser->current.type == TOK_RBRACE) return;
+    parser_advance(parser);
+    while (parser->current.type != TOK_EOF && parser->current.type != TOK_RBRACE) {
+        if (parser->current.type == TOK_SEMI) {
+            parser_advance(parser);
+            return;
+        }
+        if (token_starts_statement(parser->current.type)) return;
+        parser_advance(parser);
+    }
 }
 
 /* Check if the current token matches the expected type.
@@ -123,12 +168,11 @@ static ASTNode *parse_primary(Parser *parser) {
             return expr;
         }
         case TOK_INVALID:
-            fprintf(stderr, "Lexical Error: Invalid token '%s' at line %d\n", tok.lexeme, tok.line);
-            parser->error_count++;
+            parser_lexical_error(parser);
             parser_advance(parser);
             return ast_make_literal("0", TYPE_INT, tok.line);
         default:
-            parser_error(parser, tok.line, "Unexpected token '%s'", tok.lexeme);
+            parser_error(parser, tok.line, ERR_SYNTAX_UNEXPECTED_TOKEN, "Unexpected token '%s'", tok.lexeme);
             parser_advance(parser);
             return ast_make_literal("0", TYPE_INT, tok.line);
     }
@@ -258,7 +302,8 @@ static ASTNode *parse_decl(Parser *parser) {
     parser_advance(parser);
 
     if (parser->current.type != TOK_ID) {
-        parser_error(parser, parser->current.line, "Expected identifier after type");
+        parser_error(parser, parser->current.line, ERR_SYNTAX_EXPECTED_IDENTIFIER, "Expected identifier after type");
+        parser_synchronize(parser);
         return NULL;
     }
 
@@ -402,7 +447,7 @@ static ASTNode *parse_block(Parser *parser) {
             /* make sure progress is possible */
             if (parser->current.type != TOK_INVALID) {
                 /* current token was not consumed by the failed statement */
-                parser_error(parser, parser->current.line, "Unexpected token '%s'", parser->current.lexeme);
+                parser_error(parser, parser->current.line, ERR_SYNTAX_UNEXPECTED_TOKEN, "Unexpected token '%s'", parser->current.lexeme);
                 parser_advance(parser);
             }
         }
@@ -440,8 +485,7 @@ static ASTNode *parse_statement(Parser *parser) {
             return parse_block(parser);
 
         case TOK_INVALID:
-            fprintf(stderr, "Lexical Error: Invalid token '%s' at line %d\n", parser->current.lexeme, parser->current.line);
-            parser->error_count++;
+            parser_lexical_error(parser);
             parser_advance(parser);
             return NULL;
 
@@ -450,7 +494,7 @@ static ASTNode *parse_statement(Parser *parser) {
             return NULL;
 
         default:
-            parser_error(parser, parser->current.line, "Unexpected token '%s'", parser->current.lexeme);
+            parser_error(parser, parser->current.line, ERR_SYNTAX_UNEXPECTED_TOKEN, "Unexpected token '%s'", parser->current.lexeme);
             parser_advance(parser);
             return NULL;
     }
@@ -460,14 +504,19 @@ static ASTNode *parse_statement(Parser *parser) {
  * Sets up the lexer and gets the first token. */
 void parser_init(Parser *parser, const char *source) {
     lexer_init(&parser->lexer, source);
-    parser->current = lexer_next(&parser->lexer);
     parser->error_count = 0;
+    parser->lexical_error_count = 0;
+    parser->syntax_error_count = 0;
+    parser->token_count = 0;
     parser->last_error_code = ERR_NONE;
+    parser->current = parser_next_token(parser);
+    parser_record_token(parser);
 }
 
 /* Clean up parser resources by freeing the current token. */
 void parser_destroy(Parser *parser) {
     token_free(&parser->current);
+    lexer_destroy(&parser->lexer);
 }
 
 /* Parse the entire program by parsing statements until EOF.
@@ -475,9 +524,17 @@ void parser_destroy(Parser *parser) {
 ASTNode *parse_program(Parser *parser) {
     ASTNode *program = ast_create(NODE_PROGRAM, "program", 1);
     while (parser->current.type != TOK_EOF) {
+        size_t position_before = parser->lexer.pos;
+        TokenType token_before = parser->current.type;
         ASTNode *stmt = parse_statement(parser);
         if (stmt) {
             ast_add_child(program, stmt);
+        }
+        if (parser->current.type != TOK_EOF &&
+            parser->lexer.pos == position_before && parser->current.type == token_before) {
+            parser_error(parser, parser->current.line, ERR_SYNTAX_UNEXPECTED_TOKEN,
+                         "Parser recovery skipped token '%s'", parser->current.lexeme);
+            parser_advance(parser);
         }
     }
     return program;

@@ -1,0 +1,13 @@
+SOURCE: tests/invalid/invalid_logical_token.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_SYNTAX_MISSING_SEMICOLON] Missing ';' at line 2: Missing semicolon
+[ERR_LEXICAL_INVALID_CHAR] Invalid character '&' at line 2, column 10: Invalid character in source code
+[ERR_SYNTAX_UNEXPECTED_TOKEN] Unexpected token 'false' at line 2: Unexpected token encountered
+
+Compilation failed: 1 lexical error(s), 2 syntax error(s).

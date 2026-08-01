@@ -1,0 +1,151 @@
+SOURCE: tests/valid/complete_program.md
+EXPECTED_EXIT: 0
+ACTUAL_EXIT: 0
+
+===== STDOUT =====
+
+Abstract Syntax Tree
+--------------------
+Program program [line 1]
+  Declaration int : int [line 1]
+    Identifier x [line 1]
+  Declaration int : int [line 2]
+    Identifier y [line 2]
+  Declaration bool : bool [line 3]
+    Identifier done [line 3]
+  Assignment = : int [line 5]
+    Identifier x [line 5]
+    Literal 10 : int [line 5]
+  Assignment = : int [line 6]
+    Identifier y [line 6]
+    Literal 0 : int [line 6]
+  Assignment = : bool [line 7]
+    Identifier done [line 7]
+    Literal false : bool [line 7]
+  While while [line 9]
+    BinaryOp > : bool [line 9]
+      Identifier x : int [line 9]
+      Literal 0 : int [line 9]
+    Block block [line 9]
+      Assignment = : int [line 10]
+        Identifier y [line 10]
+        BinaryOp + : int [line 10]
+          Identifier y : int [line 10]
+          Identifier x : int [line 10]
+      Assignment = : int [line 11]
+        Identifier x [line 11]
+        BinaryOp - : int [line 11]
+          Identifier x : int [line 11]
+          Literal 1 : int [line 11]
+  If if [line 14]
+    BinaryOp > : bool [line 14]
+      Identifier y : int [line 14]
+      Literal 50 : int [line 14]
+    Block block [line 14]
+      Assignment = : bool [line 15]
+        Identifier done [line 15]
+        Literal true : bool [line 15]
+  If if [line 18]
+    BinaryOp == : bool [line 18]
+      Identifier done : bool [line 18]
+      Literal true : bool [line 18]
+    Block block [line 18]
+      Print print [line 19]
+        Identifier y : int [line 19]
+    Block block [line 20]
+      Print print [line 21]
+        Identifier x : int [line 21]
+
+Visual AST
+----------
+'-- Program
+    |-- Declaration int : int (line 1)
+    |   '-- Identifier x (line 1)
+    |-- Declaration int : int (line 2)
+    |   '-- Identifier y (line 2)
+    |-- Declaration bool : bool (line 3)
+    |   '-- Identifier done (line 3)
+    |-- Assignment = : int (line 5)
+    |   |-- Identifier x (line 5)
+    |   '-- Literal 10 : int (line 5)
+    |-- Assignment = : int (line 6)
+    |   |-- Identifier y (line 6)
+    |   '-- Literal 0 : int (line 6)
+    |-- Assignment = : bool (line 7)
+    |   |-- Identifier done (line 7)
+    |   '-- Literal false : bool (line 7)
+    |-- While while (line 9)
+    |   |-- BinaryOp > : bool (line 9)
+    |   |   |-- Identifier x : int (line 9)
+    |   |   '-- Literal 0 : int (line 9)
+    |   '-- Block
+    |       |-- Assignment = : int (line 10)
+    |       |   |-- Identifier y (line 10)
+    |       |   '-- BinaryOp + : int (line 10)
+    |       |       |-- Identifier y : int (line 10)
+    |       |       '-- Identifier x : int (line 10)
+    |       '-- Assignment = : int (line 11)
+    |           |-- Identifier x (line 11)
+    |           '-- BinaryOp - : int (line 11)
+    |               |-- Identifier x : int (line 11)
+    |               '-- Literal 1 : int (line 11)
+    |-- If if (line 14)
+    |   |-- BinaryOp > : bool (line 14)
+    |   |   |-- Identifier y : int (line 14)
+    |   |   '-- Literal 50 : int (line 14)
+    |   '-- Block
+    |       '-- Assignment = : bool (line 15)
+    |           |-- Identifier done (line 15)
+    |           '-- Literal true : bool (line 15)
+    '-- If if (line 18)
+        |-- BinaryOp == : bool (line 18)
+        |   |-- Identifier done : bool (line 18)
+        |   '-- Literal true : bool (line 18)
+        |-- Block
+        |   '-- Print print (line 19)
+        |       '-- Identifier y : int (line 19)
+        '-- Block
+            '-- Print print (line 21)
+                '-- Identifier x : int (line 21)
+
+Symbol Table
+------------
+=== Detailed Symbol Table (Scope Level: 0) ===
+All Symbols:
+  - done : bool (declared at line 3, scope 0) [ACTIVE]
+  - y : int (declared at line 2, scope 0) [ACTIVE]
+  - x : int (declared at line 1, scope 0) [ACTIVE]
+================================================
+
+Three Address Code
+------------------
+x = 10
+y = 0
+done = false
+L1:
+t1 = x > 0
+ifFalse t1 goto L2
+t2 = y + x
+y = t2
+t3 = x - 1
+x = t3
+goto L1
+L2:
+t4 = y > 50
+ifFalse t4 goto L4
+done = true
+L4:
+t5 = done == true
+ifFalse t5 goto L5
+print y
+goto L6
+L5:
+print x
+L6:
+
+Compilation Result
+------------------
+Compilation succeeded without lexical, syntax, or semantic errors.
+
+===== STDERR =====
+

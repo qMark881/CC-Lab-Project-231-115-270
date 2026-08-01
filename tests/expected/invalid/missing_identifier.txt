@@ -1,0 +1,11 @@
+SOURCE: tests/invalid/missing_identifier.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_SYNTAX_EXPECTED_IDENTIFIER] Expected identifier after type at line 1: Expected identifier
+
+Compilation failed: 0 lexical error(s), 1 syntax error(s).

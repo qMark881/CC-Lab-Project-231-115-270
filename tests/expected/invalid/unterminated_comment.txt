@@ -1,0 +1,11 @@
+SOURCE: tests/invalid/unterminated_comment.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_LEXICAL_UNTERMINATED_COMMENT] Unterminated block comment at line 3, column 1: Unterminated block comment
+
+Compilation failed: 1 lexical error(s), 0 syntax error(s).

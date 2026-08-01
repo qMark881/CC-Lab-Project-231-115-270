@@ -438,3 +438,12 @@ void ast_free(ASTNode *node) {
     free(node->comment);
     free(node);
 }
+
+size_t ast_count_nodes(const ASTNode *node) {
+    if (!node) return 0;
+    size_t count = 1;
+    for (int i = 0; i < node->child_count; ++i) {
+        count += ast_count_nodes(node->children[i]);
+    }
+    return count;
+}

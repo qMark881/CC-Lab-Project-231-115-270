@@ -1,0 +1,11 @@
+SOURCE: tests/invalid/invalid_assignment.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_SEMANTIC_ASSIGNMENT_INCOMPATIBLE] Cannot assign bool to int at line 6: Assignment type incompatible
+
+Compilation failed: 1 semantic error(s).

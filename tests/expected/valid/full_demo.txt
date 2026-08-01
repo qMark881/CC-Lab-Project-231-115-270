@@ -1,0 +1,136 @@
+SOURCE: tests/valid/full_demo.md
+EXPECTED_EXIT: 0
+ACTUAL_EXIT: 0
+
+===== STDOUT =====
+
+Abstract Syntax Tree
+--------------------
+Program program [line 1]
+  Declaration int : int [line 1]
+    Identifier total [line 1]
+  Declaration int : int [line 2]
+    Identifier i [line 2]
+  Declaration bool : bool [line 3]
+    Identifier passed [line 3]
+  Assignment = : int [line 5]
+    Identifier total [line 5]
+    Literal 0 : int [line 5]
+  Assignment = : int [line 6]
+    Identifier i [line 6]
+    Literal 5 : int [line 6]
+  Assignment = : bool [line 7]
+    Identifier passed [line 7]
+    Literal true : bool [line 7]
+  While while [line 9]
+    BinaryOp > : bool [line 9]
+      Identifier i : int [line 9]
+      Literal 0 : int [line 9]
+    Block block [line 9]
+      Assignment = : int [line 10]
+        Identifier total [line 10]
+        BinaryOp + : int [line 10]
+          Identifier total : int [line 10]
+          Identifier i : int [line 10]
+      Assignment = : int [line 11]
+        Identifier i [line 11]
+        BinaryOp - : int [line 11]
+          Identifier i : int [line 11]
+          Literal 1 : int [line 11]
+  If if [line 14]
+    BinaryOp && : bool [line 14]
+      Identifier passed : bool [line 14]
+      BinaryOp >= : bool [line 14]
+        Identifier total : int [line 14]
+        Literal 10 : int [line 14]
+    Block block [line 14]
+      Print print [line 15]
+        Identifier total : int [line 15]
+    Block block [line 16]
+      Print print [line 17]
+        Identifier i : int [line 17]
+
+Visual AST
+----------
+'-- Program
+    |-- Declaration int : int (line 1)
+    |   '-- Identifier total (line 1)
+    |-- Declaration int : int (line 2)
+    |   '-- Identifier i (line 2)
+    |-- Declaration bool : bool (line 3)
+    |   '-- Identifier passed (line 3)
+    |-- Assignment = : int (line 5)
+    |   |-- Identifier total (line 5)
+    |   '-- Literal 0 : int (line 5)
+    |-- Assignment = : int (line 6)
+    |   |-- Identifier i (line 6)
+    |   '-- Literal 5 : int (line 6)
+    |-- Assignment = : bool (line 7)
+    |   |-- Identifier passed (line 7)
+    |   '-- Literal true : bool (line 7)
+    |-- While while (line 9)
+    |   |-- BinaryOp > : bool (line 9)
+    |   |   |-- Identifier i : int (line 9)
+    |   |   '-- Literal 0 : int (line 9)
+    |   '-- Block
+    |       |-- Assignment = : int (line 10)
+    |       |   |-- Identifier total (line 10)
+    |       |   '-- BinaryOp + : int (line 10)
+    |       |       |-- Identifier total : int (line 10)
+    |       |       '-- Identifier i : int (line 10)
+    |       '-- Assignment = : int (line 11)
+    |           |-- Identifier i (line 11)
+    |           '-- BinaryOp - : int (line 11)
+    |               |-- Identifier i : int (line 11)
+    |               '-- Literal 1 : int (line 11)
+    '-- If if (line 14)
+        |-- BinaryOp && : bool (line 14)
+        |   |-- Identifier passed : bool (line 14)
+        |   '-- BinaryOp >= : bool (line 14)
+        |       |-- Identifier total : int (line 14)
+        |       '-- Literal 10 : int (line 14)
+        |-- Block
+        |   '-- Print print (line 15)
+        |       '-- Identifier total : int (line 15)
+        '-- Block
+            '-- Print print (line 17)
+                '-- Identifier i : int (line 17)
+
+Symbol Table
+------------
+=== Detailed Symbol Table (Scope Level: 0) ===
+All Symbols:
+  - passed : bool (declared at line 3, scope 0) [ACTIVE]
+  - i : int (declared at line 2, scope 0) [ACTIVE]
+  - total : int (declared at line 1, scope 0) [ACTIVE]
+================================================
+
+Three Address Code
+------------------
+total = 0
+i = 5
+passed = true
+L1:
+t1 = i > 0
+ifFalse t1 goto L2
+t2 = total + i
+total = t2
+t3 = i - 1
+i = t3
+goto L1
+L2:
+t4 = total >= 10
+t5 = passed && t4
+ifFalse t5 goto L3
+print total
+goto L4
+L3:
+print i
+L4:
+
+Compilation Result
+------------------
+Compilation succeeded without lexical, syntax, or semantic errors.
+
+===== STDERR =====
+

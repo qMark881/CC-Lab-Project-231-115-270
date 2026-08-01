@@ -1,0 +1,110 @@
+SOURCE: tests/valid/logical_expressions.md
+EXPECTED_EXIT: 0
+ACTUAL_EXIT: 0
+
+===== STDOUT =====
+
+Abstract Syntax Tree
+--------------------
+Program program [line 1]
+  Declaration bool : bool [line 1]
+    Identifier a [line 1]
+  Declaration bool : bool [line 2]
+    Identifier b [line 2]
+  Declaration bool : bool [line 3]
+    Identifier c [line 3]
+  Assignment = : bool [line 5]
+    Identifier a [line 5]
+    Literal true : bool [line 5]
+  Assignment = : bool [line 6]
+    Identifier b [line 6]
+    Literal false : bool [line 6]
+  Assignment = : bool [line 7]
+    Identifier c [line 7]
+    BinaryOp || : bool [line 7]
+      UnaryOp ! : bool [line 7]
+        BinaryOp && : bool [line 7]
+          Identifier a : bool [line 7]
+          Identifier b : bool [line 7]
+      BinaryOp == : bool [line 7]
+        Identifier a : bool [line 7]
+        Literal true : bool [line 7]
+  If if [line 9]
+    BinaryOp && : bool [line 9]
+      Identifier c : bool [line 9]
+      Identifier a : bool [line 9]
+    Block block [line 9]
+      Print print [line 10]
+        Identifier a : bool [line 10]
+    Block block [line 11]
+      Print print [line 12]
+        Identifier b : bool [line 12]
+
+Visual AST
+----------
+'-- Program
+    |-- Declaration bool : bool (line 1)
+    |   '-- Identifier a (line 1)
+    |-- Declaration bool : bool (line 2)
+    |   '-- Identifier b (line 2)
+    |-- Declaration bool : bool (line 3)
+    |   '-- Identifier c (line 3)
+    |-- Assignment = : bool (line 5)
+    |   |-- Identifier a (line 5)
+    |   '-- Literal true : bool (line 5)
+    |-- Assignment = : bool (line 6)
+    |   |-- Identifier b (line 6)
+    |   '-- Literal false : bool (line 6)
+    |-- Assignment = : bool (line 7)
+    |   |-- Identifier c (line 7)
+    |   '-- BinaryOp || : bool (line 7)
+    |       |-- UnaryOp ! : bool (line 7)
+    |       |   '-- BinaryOp && : bool (line 7)
+    |       |       |-- Identifier a : bool (line 7)
+    |       |       '-- Identifier b : bool (line 7)
+    |       '-- BinaryOp == : bool (line 7)
+    |           |-- Identifier a : bool (line 7)
+    |           '-- Literal true : bool (line 7)
+    '-- If if (line 9)
+        |-- BinaryOp && : bool (line 9)
+        |   |-- Identifier c : bool (line 9)
+        |   '-- Identifier a : bool (line 9)
+        |-- Block
+        |   '-- Print print (line 10)
+        |       '-- Identifier a : bool (line 10)
+        '-- Block
+            '-- Print print (line 12)
+                '-- Identifier b : bool (line 12)
+
+Symbol Table
+------------
+=== Detailed Symbol Table (Scope Level: 0) ===
+All Symbols:
+  - c : bool (declared at line 3, scope 0) [ACTIVE]
+  - b : bool (declared at line 2, scope 0) [ACTIVE]
+  - a : bool (declared at line 1, scope 0) [ACTIVE]
+================================================
+
+Three Address Code
+------------------
+a = true
+b = false
+t1 = a && b
+t2 = !t1
+t3 = a == true
+t4 = t2 || t3
+c = t4
+t5 = c && a
+ifFalse t5 goto L1
+print a
+goto L2
+L1:
+print b
+L2:
+
+Compilation Result
+------------------
+Compilation succeeded without lexical, syntax, or semantic errors.
+
+===== STDERR =====
+

@@ -36,15 +36,15 @@ b = false || false;
 }
 
 // Multiple declarations
-int a;
-int b;
-int c;
-int d;
-int e;
+int p;
+int q;
+int r;
+int s;
+int t;
 
-a = 1;
-b = 2;
-c = 3;
-d = 4;
-e = 5;
+p = 1;
+q = 2;
+r = 3;
+s = 4;
+t = 5;
 ```

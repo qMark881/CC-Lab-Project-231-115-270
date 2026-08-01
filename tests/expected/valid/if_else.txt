@@ -1,0 +1,68 @@
+SOURCE: tests/valid/if_else.md
+EXPECTED_EXIT: 0
+ACTUAL_EXIT: 0
+
+===== STDOUT =====
+
+Abstract Syntax Tree
+--------------------
+Program program [line 1]
+  Declaration int : int [line 1]
+    Identifier marks [line 1]
+  Assignment = : int [line 3]
+    Identifier marks [line 3]
+    Literal 80 : int [line 3]
+  If if [line 5]
+    BinaryOp >= : bool [line 5]
+      Identifier marks : int [line 5]
+      Literal 50 : int [line 5]
+    Block block [line 5]
+      Print print [line 6]
+        Identifier marks : int [line 6]
+    Block block [line 7]
+      Print print [line 8]
+        Literal 0 : int [line 8]
+
+Visual AST
+----------
+'-- Program
+    |-- Declaration int : int (line 1)
+    |   '-- Identifier marks (line 1)
+    |-- Assignment = : int (line 3)
+    |   |-- Identifier marks (line 3)
+    |   '-- Literal 80 : int (line 3)
+    '-- If if (line 5)
+        |-- BinaryOp >= : bool (line 5)
+        |   |-- Identifier marks : int (line 5)
+        |   '-- Literal 50 : int (line 5)
+        |-- Block
+        |   '-- Print print (line 6)
+        |       '-- Identifier marks : int (line 6)
+        '-- Block
+            '-- Print print (line 8)
+                '-- Literal 0 : int (line 8)
+
+Symbol Table
+------------
+=== Detailed Symbol Table (Scope Level: 0) ===
+All Symbols:
+  - marks : int (declared at line 1, scope 0) [ACTIVE]
+================================================
+
+Three Address Code
+------------------
+marks = 80
+t1 = marks >= 50
+ifFalse t1 goto L1
+print marks
+goto L2
+L1:
+print 0
+L2:
+
+Compilation Result
+------------------
+Compilation succeeded without lexical, syntax, or semantic errors.
+
+===== STDERR =====
+

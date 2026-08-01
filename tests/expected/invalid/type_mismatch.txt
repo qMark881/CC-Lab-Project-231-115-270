@@ -1,0 +1,11 @@
+SOURCE: tests/invalid/type_mismatch.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_SEMANTIC_TYPE_MISMATCH] Type mismatch in assignment: expected bool, found int at line 3: Type mismatch
+
+Compilation failed: 1 semantic error(s).

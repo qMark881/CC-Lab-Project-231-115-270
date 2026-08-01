@@ -1,0 +1,56 @@
+SOURCE: tests/valid/declaration.md
+EXPECTED_EXIT: 0
+ACTUAL_EXIT: 0
+
+===== STDOUT =====
+
+Abstract Syntax Tree
+--------------------
+Program program [line 1]
+  Declaration int : int [line 1]
+    Identifier a [line 1]
+  Declaration int : int [line 2]
+    Identifier b [line 2]
+  Declaration float : float [line 3]
+    Identifier pi [line 3]
+  Declaration bool : bool [line 4]
+    Identifier flag [line 4]
+  Assignment = : bool [line 6]
+    Identifier flag [line 6]
+    Literal true : bool [line 6]
+
+Visual AST
+----------
+'-- Program
+    |-- Declaration int : int (line 1)
+    |   '-- Identifier a (line 1)
+    |-- Declaration int : int (line 2)
+    |   '-- Identifier b (line 2)
+    |-- Declaration float : float (line 3)
+    |   '-- Identifier pi (line 3)
+    |-- Declaration bool : bool (line 4)
+    |   '-- Identifier flag (line 4)
+    '-- Assignment = : bool (line 6)
+        |-- Identifier flag (line 6)
+        '-- Literal true : bool (line 6)
+
+Symbol Table
+------------
+=== Detailed Symbol Table (Scope Level: 0) ===
+All Symbols:
+  - flag : bool (declared at line 4, scope 0) [ACTIVE]
+  - pi : float (declared at line 3, scope 0) [ACTIVE]
+  - b : int (declared at line 2, scope 0) [ACTIVE]
+  - a : int (declared at line 1, scope 0) [ACTIVE]
+================================================
+
+Three Address Code
+------------------
+flag = true
+
+Compilation Result
+------------------
+Compilation succeeded without lexical, syntax, or semantic errors.
+
+===== STDERR =====
+

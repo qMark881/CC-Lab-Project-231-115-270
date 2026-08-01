@@ -60,3 +60,8 @@ cmake-build-*/
 # ==================================================
 .DS_Store
 Thumbs.db
+
+# Build directories and sanitizer binaries
+build/
+compiler-sanitize
+compiler_san

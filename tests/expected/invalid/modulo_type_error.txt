@@ -1,0 +1,11 @@
+SOURCE: tests/invalid/modulo_type_error.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_SEMANTIC_INVALID_MODULO] Invalid expression: modulo operator requires integer operands at line 3: Modulo requires integer operands
+
+Compilation failed: 1 semantic error(s).

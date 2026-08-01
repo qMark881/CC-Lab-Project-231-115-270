@@ -1,0 +1,11 @@
+SOURCE: tests/invalid/scope_violation.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_SEMANTIC_OUT_OF_SCOPE] Variable 'y' is out of scope at line 10: Variable out of scope
+
+Compilation failed: 1 semantic error(s).

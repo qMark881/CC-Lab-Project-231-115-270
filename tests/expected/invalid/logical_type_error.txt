@@ -1,0 +1,11 @@
+SOURCE: tests/invalid/logical_type_error.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_SEMANTIC_INVALID_LOGICAL] Invalid expression: logical operator '&&' requires bool operands at line 3: Invalid logical operation
+
+Compilation failed: 1 semantic error(s).

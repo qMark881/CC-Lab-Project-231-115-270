@@ -1,0 +1,60 @@
+SOURCE: tests/valid/assignment.md
+EXPECTED_EXIT: 0
+ACTUAL_EXIT: 0
+
+===== STDOUT =====
+
+Abstract Syntax Tree
+--------------------
+Program program [line 1]
+  Declaration int : int [line 1]
+    Identifier x [line 1]
+  Declaration int : int [line 2]
+    Identifier y [line 2]
+  Assignment = : int [line 4]
+    Identifier x [line 4]
+    Literal 10 : int [line 4]
+  Assignment = : int [line 5]
+    Identifier y [line 5]
+    Identifier x : int [line 5]
+  Assignment = : int [line 6]
+    Identifier x [line 6]
+    Identifier y : int [line 6]
+
+Visual AST
+----------
+'-- Program
+    |-- Declaration int : int (line 1)
+    |   '-- Identifier x (line 1)
+    |-- Declaration int : int (line 2)
+    |   '-- Identifier y (line 2)
+    |-- Assignment = : int (line 4)
+    |   |-- Identifier x (line 4)
+    |   '-- Literal 10 : int (line 4)
+    |-- Assignment = : int (line 5)
+    |   |-- Identifier y (line 5)
+    |   '-- Identifier x : int (line 5)
+    '-- Assignment = : int (line 6)
+        |-- Identifier x (line 6)
+        '-- Identifier y : int (line 6)
+
+Symbol Table
+------------
+=== Detailed Symbol Table (Scope Level: 0) ===
+All Symbols:
+  - y : int (declared at line 2, scope 0) [ACTIVE]
+  - x : int (declared at line 1, scope 0) [ACTIVE]
+================================================
+
+Three Address Code
+------------------
+x = 10
+y = x
+x = y
+
+Compilation Result
+------------------
+Compilation succeeded without lexical, syntax, or semantic errors.
+
+===== STDERR =====
+

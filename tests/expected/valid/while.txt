@@ -1,0 +1,73 @@
+SOURCE: tests/valid/while.md
+EXPECTED_EXIT: 0
+ACTUAL_EXIT: 0
+
+===== STDOUT =====
+
+Abstract Syntax Tree
+--------------------
+Program program [line 1]
+  Declaration int : int [line 1]
+    Identifier i [line 1]
+  Assignment = : int [line 3]
+    Identifier i [line 3]
+    Literal 5 : int [line 3]
+  While while [line 5]
+    BinaryOp > : bool [line 5]
+      Identifier i : int [line 5]
+      Literal 0 : int [line 5]
+    Block block [line 5]
+      Print print [line 6]
+        Identifier i : int [line 6]
+      Assignment = : int [line 7]
+        Identifier i [line 7]
+        BinaryOp - : int [line 7]
+          Identifier i : int [line 7]
+          Literal 1 : int [line 7]
+
+Visual AST
+----------
+'-- Program
+    |-- Declaration int : int (line 1)
+    |   '-- Identifier i (line 1)
+    |-- Assignment = : int (line 3)
+    |   |-- Identifier i (line 3)
+    |   '-- Literal 5 : int (line 3)
+    '-- While while (line 5)
+        |-- BinaryOp > : bool (line 5)
+        |   |-- Identifier i : int (line 5)
+        |   '-- Literal 0 : int (line 5)
+        '-- Block
+            |-- Print print (line 6)
+            |   '-- Identifier i : int (line 6)
+            '-- Assignment = : int (line 7)
+                |-- Identifier i (line 7)
+                '-- BinaryOp - : int (line 7)
+                    |-- Identifier i : int (line 7)
+                    '-- Literal 1 : int (line 7)
+
+Symbol Table
+------------
+=== Detailed Symbol Table (Scope Level: 0) ===
+All Symbols:
+  - i : int (declared at line 1, scope 0) [ACTIVE]
+================================================
+
+Three Address Code
+------------------
+i = 5
+L1:
+t1 = i > 0
+ifFalse t1 goto L2
+print i
+t2 = i - 1
+i = t2
+goto L1
+L2:
+
+Compilation Result
+------------------
+Compilation succeeded without lexical, syntax, or semantic errors.
+
+===== STDERR =====
+

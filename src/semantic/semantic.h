@@ -20,7 +20,7 @@ typedef struct SemanticContext {
     int error_count;                  /* Total number of semantic errors encountered */
     ErrorCode last_error_code;        /* Last error code encountered */
     int warning_count;                /* Total number of warnings issued */
-    ErrorCode last_warning_code;      /* Last warning code encountered */
+    WarningCode last_warning_code;      /* Last warning code encountered */
 } SemanticContext;
 
 /* Initialize the semantic analysis context with an empty symbol table. */

@@ -19,6 +19,9 @@ typedef struct Symbol {
 typedef struct SymbolTable {
     Symbol *symbols;
     int current_scope;
+    int scopes_entered;
+    int max_scope_depth;
+    int symbol_count;
 } SymbolTable;
 
 void symtab_init(SymbolTable *table);
@@ -34,7 +37,7 @@ void symtab_print_detailed(const SymbolTable *table);
 
 /* Detect symbol conflicts (shadowing, name collisions) */
 typedef struct {
-    char *symbol_name;
+    const char *symbol_name;
     int outer_scope_line;
     int inner_scope_line;
     DataType outer_type;

@@ -100,6 +100,11 @@ static DataType analyze_binary(ASTNode *node, SemanticContext *ctx) {
     DataType right = analyze_expr(node->children[1], ctx);
     const char *op = node->text;
 
+    if (left == TYPE_ERROR || right == TYPE_ERROR) {
+        node->data_type = TYPE_ERROR;
+        return TYPE_ERROR;
+    }
+
     if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0 || strcmp(op, "%") == 0) {
         if (!is_numeric_type(left) || !is_numeric_type(right)) {
             semantic_error(ctx, node->line, ERR_SEMANTIC_INVALID_ARITHMETIC, "Invalid expression: arithmetic operator '%s' requires numeric operands", op);
@@ -157,6 +162,10 @@ static DataType analyze_binary(ASTNode *node, SemanticContext *ctx) {
 static DataType analyze_unary(ASTNode *node, SemanticContext *ctx) {
     DataType operand = analyze_expr(node->children[0], ctx);
     const char *op = node->text;
+    if (operand == TYPE_ERROR) {
+        node->data_type = TYPE_ERROR;
+        return TYPE_ERROR;
+    }
     if (strcmp(op, "!") == 0) {
         if (!is_bool_type(operand)) {
             semantic_error(ctx, node->line, ERR_SEMANTIC_INVALID_LOGICAL, "Invalid expression: logical not requires bool operand");
@@ -248,19 +257,14 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
                 break;
             }
             
-            /* Issue warning for declaration without initialization */
-            if (node->child_count < 2) {
-                semantic_warning(ctx, node->line, WARN_UNUSED_DECLARATION, 
-                              "Variable '%s' declared without initialization", name);
-            }
-            
             if (node->child_count > 1) {
                 DataType init_type = analyze_expr(node->children[1], ctx);
-                if (!assignment_compatible(declared, init_type)) {
+                if (init_type != TYPE_ERROR && !assignment_compatible(declared, init_type)) {
                     if (declared == TYPE_INT && init_type == TYPE_BOOL) {
                         semantic_error(ctx, node->line, ERR_SEMANTIC_ASSIGNMENT_INCOMPATIBLE, "Cannot assign bool to int");
                     } else {
-                        semantic_error(ctx, node->line, ERR_SEMANTIC_TYPE_MISMATCH, "Type mismatch in assignment\nExpected %s\nFound %s",
+                        semantic_error(ctx, node->line, ERR_SEMANTIC_TYPE_MISMATCH,
+                                       "Type mismatch in initialization: expected %s, found %s",
                                        type_to_string(declared), type_to_string(init_type));
                     }
                 }
@@ -296,11 +300,11 @@ static void analyze_stmt(ASTNode *node, SemanticContext *ctx) {
             /* Record variable usage */
             symtab_record_usage(&ctx->table, id->text, node->line);
             DataType rhs_type = analyze_expr(rhs, ctx);
-            if (!assignment_compatible(sym->type, rhs_type)) {
+            if (rhs_type != TYPE_ERROR && !assignment_compatible(sym->type, rhs_type)) {
                 if (sym->type == TYPE_INT && rhs_type == TYPE_BOOL) {
-                    semantic_error(ctx, node->line, "Cannot assign bool to int");
+                    semantic_error(ctx, node->line, ERR_SEMANTIC_ASSIGNMENT_INCOMPATIBLE, "Cannot assign bool to int");
                 } else {
-                    semantic_error(ctx, node->line, "Type mismatch in assignment\nExpected %s\nFound %s",
+                    semantic_error(ctx, node->line, ERR_SEMANTIC_TYPE_MISMATCH, "Type mismatch in assignment: expected %s, found %s",
                                    type_to_string(sym->type), type_to_string(rhs_type));
                 }
             }

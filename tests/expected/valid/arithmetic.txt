@@ -1,0 +1,80 @@
+SOURCE: tests/valid/arithmetic.md
+EXPECTED_EXIT: 0
+ACTUAL_EXIT: 0
+
+===== STDOUT =====
+
+Abstract Syntax Tree
+--------------------
+Program program [line 1]
+  Declaration int : int [line 1]
+    Identifier a [line 1]
+  Declaration int : int [line 2]
+    Identifier b [line 2]
+  Declaration int : int [line 3]
+    Identifier c [line 3]
+  Assignment = : int [line 5]
+    Identifier a [line 5]
+    Literal 5 : int [line 5]
+  Assignment = : int [line 6]
+    Identifier b [line 6]
+    Literal 10 : int [line 6]
+  Assignment = : int [line 8]
+    Identifier c [line 8]
+    BinaryOp + : int [line 8]
+      Identifier a : int [line 8]
+      BinaryOp * : int [line 8]
+        Identifier b : int [line 8]
+        Literal 2 : int [line 8]
+  Print print [line 10]
+    Identifier c : int [line 10]
+
+Visual AST
+----------
+'-- Program
+    |-- Declaration int : int (line 1)
+    |   '-- Identifier a (line 1)
+    |-- Declaration int : int (line 2)
+    |   '-- Identifier b (line 2)
+    |-- Declaration int : int (line 3)
+    |   '-- Identifier c (line 3)
+    |-- Assignment = : int (line 5)
+    |   |-- Identifier a (line 5)
+    |   '-- Literal 5 : int (line 5)
+    |-- Assignment = : int (line 6)
+    |   |-- Identifier b (line 6)
+    |   '-- Literal 10 : int (line 6)
+    |-- Assignment = : int (line 8)
+    |   |-- Identifier c (line 8)
+    |   '-- BinaryOp + : int (line 8)
+    |       |-- Identifier a : int (line 8)
+    |       '-- BinaryOp * : int (line 8)
+    |           |-- Identifier b : int (line 8)
+    |           '-- Literal 2 : int (line 8)
+    '-- Print print (line 10)
+        '-- Identifier c : int (line 10)
+
+Symbol Table
+------------
+=== Detailed Symbol Table (Scope Level: 0) ===
+All Symbols:
+  - c : int (declared at line 3, scope 0) [ACTIVE]
+  - b : int (declared at line 2, scope 0) [ACTIVE]
+  - a : int (declared at line 1, scope 0) [ACTIVE]
+================================================
+
+Three Address Code
+------------------
+a = 5
+b = 10
+t1 = b * 2
+t2 = a + t1
+c = t2
+print c
+
+Compilation Result
+------------------
+Compilation succeeded without lexical, syntax, or semantic errors.
+
+===== STDERR =====
+

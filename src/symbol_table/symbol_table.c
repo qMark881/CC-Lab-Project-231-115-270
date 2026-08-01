@@ -7,6 +7,9 @@
 void symtab_init(SymbolTable *table) {
     table->symbols = NULL;
     table->current_scope = 0;
+    table->scopes_entered = 1;
+    table->max_scope_depth = 0;
+    table->symbol_count = 0;
 }
 
 void symtab_destroy(SymbolTable *table) {
@@ -20,10 +23,17 @@ void symtab_destroy(SymbolTable *table) {
     }
     table->symbols = NULL;
     table->current_scope = 0;
+    table->scopes_entered = 0;
+    table->max_scope_depth = 0;
+    table->symbol_count = 0;
 }
 
 void symtab_enter_scope(SymbolTable *table) {
     table->current_scope++;
+    table->scopes_entered++;
+    if (table->current_scope > table->max_scope_depth) {
+        table->max_scope_depth = table->current_scope;
+    }
 }
 
 void symtab_exit_scope(SymbolTable *table) {
@@ -49,7 +59,6 @@ Symbol *symtab_lookup_current_scope(const SymbolTable *table, const char *name) 
 
 bool symtab_insert(SymbolTable *table, const char *name, DataType type, int line) {
     if (symtab_lookup_current_scope(table, name)) {
-        fprintf(stderr, "Semantic Error: Redeclaration of variable '%s' at line %d\n", name, line);
         return false;
     }
 
@@ -64,6 +73,7 @@ bool symtab_insert(SymbolTable *table, const char *name, DataType type, int line
     sym->usage_capacity = 0;
     sym->next = table->symbols;
     table->symbols = sym;
+    table->symbol_count++;
     return true;
 }
 
@@ -144,7 +154,7 @@ int symtab_find_conflicts(const SymbolTable *table, SymbolConflict *conflicts, i
                 Symbol *outer_sym = (outer->scope_level < inner->scope_level) ? outer : inner;
                 Symbol *inner_sym = (outer->scope_level < inner->scope_level) ? inner : outer;
                 
-                conflicts[conflict_count].symbol_name = xstrdup(inner_sym->name);
+                conflicts[conflict_count].symbol_name = inner_sym->name;
                 conflicts[conflict_count].outer_scope_line = outer_sym->declared_line;
                 conflicts[conflict_count].inner_scope_line = inner_sym->declared_line;
                 conflicts[conflict_count].outer_type = outer_sym->type;

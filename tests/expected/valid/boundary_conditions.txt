@@ -1,0 +1,256 @@
+SOURCE: tests/valid/boundary_conditions.md
+EXPECTED_EXIT: 0
+ACTUAL_EXIT: 0
+
+===== STDOUT =====
+
+Abstract Syntax Tree
+--------------------
+Program program [line 1]
+  Declaration int : int [line 1]
+    Identifier x [line 1]
+  Declaration int : int [line 2]
+    Identifier y [line 2]
+  Declaration float : float [line 3]
+    Identifier f [line 3]
+  Declaration bool : bool [line 4]
+    Identifier b [line 4]
+  Assignment = : int [line 7]
+    Identifier x [line 7]
+    Literal 0 : int [line 7]
+  Assignment = : int [line 8]
+    Identifier y [line 8]
+    Literal 0 : int [line 8]
+  Assignment = : float [line 11]
+    Identifier f [line 11]
+    Literal 0.0 : float [line 11]
+  Assignment = : float [line 12]
+    Identifier f [line 12]
+    Literal 1.0 : float [line 12]
+  Assignment = : float [line 13]
+    Identifier f [line 13]
+    UnaryOp - : float [line 13]
+      Literal 1.0 : float [line 13]
+  Assignment = : float [line 14]
+    Identifier f [line 14]
+    Literal 3.14159 : float [line 14]
+  Assignment = : bool [line 17]
+    Identifier b [line 17]
+    Literal true : bool [line 17]
+  Assignment = : bool [line 18]
+    Identifier b [line 18]
+    Literal false : bool [line 18]
+  Assignment = : int [line 21]
+    Identifier x [line 21]
+    Identifier x : int [line 21]
+  Assignment = : int [line 22]
+    Identifier y [line 22]
+    Identifier y : int [line 22]
+  Assignment = : int [line 25]
+    Identifier x [line 25]
+    BinaryOp + : int [line 25]
+      Literal 0 : int [line 25]
+      Literal 0 : int [line 25]
+  Assignment = : int [line 26]
+    Identifier y [line 26]
+    BinaryOp - : int [line 26]
+      Literal 1 : int [line 26]
+      Literal 1 : int [line 26]
+  Assignment = : float [line 27]
+    Identifier f [line 27]
+    BinaryOp * : float [line 27]
+      Literal 1.0 : float [line 27]
+      Literal 1.0 : float [line 27]
+  Assignment = : bool [line 28]
+    Identifier b [line 28]
+    BinaryOp && : bool [line 28]
+      Literal true : bool [line 28]
+      Literal true : bool [line 28]
+  Assignment = : bool [line 29]
+    Identifier b [line 29]
+    BinaryOp || : bool [line 29]
+      Literal false : bool [line 29]
+      Literal false : bool [line 29]
+  Block block [line 32]
+    Declaration int : int [line 33]
+      Identifier temp [line 33]
+    Assignment = : int [line 34]
+      Identifier temp [line 34]
+      Literal 5 : int [line 34]
+  Declaration int : int [line 38]
+    Identifier p [line 38]
+  Declaration int : int [line 39]
+    Identifier q [line 39]
+  Declaration int : int [line 40]
+    Identifier r [line 40]
+  Declaration int : int [line 41]
+    Identifier s [line 41]
+  Declaration int : int [line 42]
+    Identifier t [line 42]
+  Assignment = : int [line 44]
+    Identifier p [line 44]
+    Literal 1 : int [line 44]
+  Assignment = : int [line 45]
+    Identifier q [line 45]
+    Literal 2 : int [line 45]
+  Assignment = : int [line 46]
+    Identifier r [line 46]
+    Literal 3 : int [line 46]
+  Assignment = : int [line 47]
+    Identifier s [line 47]
+    Literal 4 : int [line 47]
+  Assignment = : int [line 48]
+    Identifier t [line 48]
+    Literal 5 : int [line 48]
+
+Visual AST
+----------
+'-- Program
+    |-- Declaration int : int (line 1)
+    |   '-- Identifier x (line 1)
+    |-- Declaration int : int (line 2)
+    |   '-- Identifier y (line 2)
+    |-- Declaration float : float (line 3)
+    |   '-- Identifier f (line 3)
+    |-- Declaration bool : bool (line 4)
+    |   '-- Identifier b (line 4)
+    |-- Assignment = : int (line 7)
+    |   |-- Identifier x (line 7)
+    |   '-- Literal 0 : int (line 7)
+    |-- Assignment = : int (line 8)
+    |   |-- Identifier y (line 8)
+    |   '-- Literal 0 : int (line 8)
+    |-- Assignment = : float (line 11)
+    |   |-- Identifier f (line 11)
+    |   '-- Literal 0.0 : float (line 11)
+    |-- Assignment = : float (line 12)
+    |   |-- Identifier f (line 12)
+    |   '-- Literal 1.0 : float (line 12)
+    |-- Assignment = : float (line 13)
+    |   |-- Identifier f (line 13)
+    |   '-- UnaryOp - : float (line 13)
+    |       '-- Literal 1.0 : float (line 13)
+    |-- Assignment = : float (line 14)
+    |   |-- Identifier f (line 14)
+    |   '-- Literal 3.14159 : float (line 14)
+    |-- Assignment = : bool (line 17)
+    |   |-- Identifier b (line 17)
+    |   '-- Literal true : bool (line 17)
+    |-- Assignment = : bool (line 18)
+    |   |-- Identifier b (line 18)
+    |   '-- Literal false : bool (line 18)
+    |-- Assignment = : int (line 21)
+    |   |-- Identifier x (line 21)
+    |   '-- Identifier x : int (line 21)
+    |-- Assignment = : int (line 22)
+    |   |-- Identifier y (line 22)
+    |   '-- Identifier y : int (line 22)
+    |-- Assignment = : int (line 25)
+    |   |-- Identifier x (line 25)
+    |   '-- BinaryOp + : int (line 25)
+    |       |-- Literal 0 : int (line 25)
+    |       '-- Literal 0 : int (line 25)
+    |-- Assignment = : int (line 26)
+    |   |-- Identifier y (line 26)
+    |   '-- BinaryOp - : int (line 26)
+    |       |-- Literal 1 : int (line 26)
+    |       '-- Literal 1 : int (line 26)
+    |-- Assignment = : float (line 27)
+    |   |-- Identifier f (line 27)
+    |   '-- BinaryOp * : float (line 27)
+    |       |-- Literal 1.0 : float (line 27)
+    |       '-- Literal 1.0 : float (line 27)
+    |-- Assignment = : bool (line 28)
+    |   |-- Identifier b (line 28)
+    |   '-- BinaryOp && : bool (line 28)
+    |       |-- Literal true : bool (line 28)
+    |       '-- Literal true : bool (line 28)
+    |-- Assignment = : bool (line 29)
+    |   |-- Identifier b (line 29)
+    |   '-- BinaryOp || : bool (line 29)
+    |       |-- Literal false : bool (line 29)
+    |       '-- Literal false : bool (line 29)
+    |-- Block
+    |   |-- Declaration int : int (line 33)
+    |   |   '-- Identifier temp (line 33)
+    |   '-- Assignment = : int (line 34)
+    |       |-- Identifier temp (line 34)
+    |       '-- Literal 5 : int (line 34)
+    |-- Declaration int : int (line 38)
+    |   '-- Identifier p (line 38)
+    |-- Declaration int : int (line 39)
+    |   '-- Identifier q (line 39)
+    |-- Declaration int : int (line 40)
+    |   '-- Identifier r (line 40)
+    |-- Declaration int : int (line 41)
+    |   '-- Identifier s (line 41)
+    |-- Declaration int : int (line 42)
+    |   '-- Identifier t (line 42)
+    |-- Assignment = : int (line 44)
+    |   |-- Identifier p (line 44)
+    |   '-- Literal 1 : int (line 44)
+    |-- Assignment = : int (line 45)
+    |   |-- Identifier q (line 45)
+    |   '-- Literal 2 : int (line 45)
+    |-- Assignment = : int (line 46)
+    |   |-- Identifier r (line 46)
+    |   '-- Literal 3 : int (line 46)
+    |-- Assignment = : int (line 47)
+    |   |-- Identifier s (line 47)
+    |   '-- Literal 4 : int (line 47)
+    '-- Assignment = : int (line 48)
+        |-- Identifier t (line 48)
+        '-- Literal 5 : int (line 48)
+
+Symbol Table
+------------
+=== Detailed Symbol Table (Scope Level: 0) ===
+All Symbols:
+  - t : int (declared at line 42, scope 0) [ACTIVE]
+  - s : int (declared at line 41, scope 0) [ACTIVE]
+  - r : int (declared at line 40, scope 0) [ACTIVE]
+  - q : int (declared at line 39, scope 0) [ACTIVE]
+  - p : int (declared at line 38, scope 0) [ACTIVE]
+  - temp : int (declared at line 33, scope 1) [INACTIVE]
+  - b : bool (declared at line 4, scope 0) [ACTIVE]
+  - f : float (declared at line 3, scope 0) [ACTIVE]
+  - y : int (declared at line 2, scope 0) [ACTIVE]
+  - x : int (declared at line 1, scope 0) [ACTIVE]
+================================================
+
+Three Address Code
+------------------
+x = 0
+y = 0
+f = 0.0
+f = 1.0
+t1 = -1.0
+f = t1
+f = 3.14159
+b = true
+b = false
+x = x
+y = y
+t2 = 0 + 0
+x = t2
+t3 = 1 - 1
+y = t3
+t4 = 1.0 * 1.0
+f = t4
+t5 = true && true
+b = t5
+t6 = false || false
+b = t6
+temp = 5
+p = 1
+q = 2
+r = 3
+s = 4
+t = 5
+
+Compilation Result
+------------------
+Compilation succeeded without lexical, syntax, or semantic errors.
+
+===== STDERR =====
+

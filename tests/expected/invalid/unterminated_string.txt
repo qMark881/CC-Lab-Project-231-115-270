@@ -1,0 +1,11 @@
+SOURCE: tests/invalid/unterminated_string.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_SYNTAX_MISSING_RBRACE] Missing '}' at line 11: Missing right brace
+
+Compilation failed: 0 lexical error(s), 1 syntax error(s).

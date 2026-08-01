@@ -1,0 +1,11 @@
+SOURCE: tests/invalid/redeclaration.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_SEMANTIC_REDECLARATION] Redeclaration of variable 'count' at line 3: Variable redeclaration
+
+Compilation failed: 1 semantic error(s).

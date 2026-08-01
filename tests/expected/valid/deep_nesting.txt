@@ -1,0 +1,230 @@
+SOURCE: tests/valid/deep_nesting.md
+EXPECTED_EXIT: 0
+ACTUAL_EXIT: 0
+
+===== STDOUT =====
+
+Abstract Syntax Tree
+--------------------
+Program program [line 1]
+  Declaration int : int [line 1]
+    Identifier x [line 1]
+  Declaration int : int [line 2]
+    Identifier y [line 2]
+  Declaration int : int [line 3]
+    Identifier z [line 3]
+  Declaration bool : bool [line 4]
+    Identifier result [line 4]
+  Assignment = : int [line 6]
+    Identifier x [line 6]
+    Literal 1 : int [line 6]
+  Assignment = : int [line 7]
+    Identifier y [line 7]
+    Literal 2 : int [line 7]
+  Assignment = : int [line 8]
+    Identifier z [line 8]
+    Literal 3 : int [line 8]
+  If if [line 10]
+    BinaryOp > : bool [line 10]
+      Identifier x : int [line 10]
+      Literal 0 : int [line 10]
+    Block block [line 10]
+      If if [line 11]
+        BinaryOp > : bool [line 11]
+          Identifier y : int [line 11]
+          Literal 0 : int [line 11]
+        Block block [line 11]
+          If if [line 12]
+            BinaryOp > : bool [line 12]
+              Identifier z : int [line 12]
+              Literal 0 : int [line 12]
+            Block block [line 12]
+              Assignment = : bool [line 13]
+                Identifier result [line 13]
+                Literal true : bool [line 13]
+            Block block [line 14]
+              Assignment = : bool [line 15]
+                Identifier result [line 15]
+                Literal false : bool [line 15]
+        Block block [line 17]
+          Assignment = : bool [line 18]
+            Identifier result [line 18]
+            Literal false : bool [line 18]
+    Block block [line 20]
+      Assignment = : bool [line 21]
+        Identifier result [line 21]
+        Literal false : bool [line 21]
+  While while [line 24]
+    BinaryOp > : bool [line 24]
+      Identifier x : int [line 24]
+      Literal 0 : int [line 24]
+    Block block [line 24]
+      While while [line 25]
+        BinaryOp > : bool [line 25]
+          Identifier y : int [line 25]
+          Literal 0 : int [line 25]
+        Block block [line 25]
+          While while [line 26]
+            BinaryOp > : bool [line 26]
+              Identifier z : int [line 26]
+              Literal 0 : int [line 26]
+            Block block [line 26]
+              Assignment = : int [line 27]
+                Identifier z [line 27]
+                BinaryOp - : int [line 27]
+                  Identifier z : int [line 27]
+                  Literal 1 : int [line 27]
+          Assignment = : int [line 29]
+            Identifier y [line 29]
+            BinaryOp - : int [line 29]
+              Identifier y : int [line 29]
+              Literal 1 : int [line 29]
+      Assignment = : int [line 31]
+        Identifier x [line 31]
+        BinaryOp - : int [line 31]
+          Identifier x : int [line 31]
+          Literal 1 : int [line 31]
+
+Visual AST
+----------
+'-- Program
+    |-- Declaration int : int (line 1)
+    |   '-- Identifier x (line 1)
+    |-- Declaration int : int (line 2)
+    |   '-- Identifier y (line 2)
+    |-- Declaration int : int (line 3)
+    |   '-- Identifier z (line 3)
+    |-- Declaration bool : bool (line 4)
+    |   '-- Identifier result (line 4)
+    |-- Assignment = : int (line 6)
+    |   |-- Identifier x (line 6)
+    |   '-- Literal 1 : int (line 6)
+    |-- Assignment = : int (line 7)
+    |   |-- Identifier y (line 7)
+    |   '-- Literal 2 : int (line 7)
+    |-- Assignment = : int (line 8)
+    |   |-- Identifier z (line 8)
+    |   '-- Literal 3 : int (line 8)
+    |-- If if (line 10)
+    |   |-- BinaryOp > : bool (line 10)
+    |   |   |-- Identifier x : int (line 10)
+    |   |   '-- Literal 0 : int (line 10)
+    |   |-- Block
+    |   |   '-- If if (line 11)
+    |   |       |-- BinaryOp > : bool (line 11)
+    |   |       |   |-- Identifier y : int (line 11)
+    |   |       |   '-- Literal 0 : int (line 11)
+    |   |       |-- Block
+    |   |       |   '-- If if (line 12)
+    |   |       |       |-- BinaryOp > : bool (line 12)
+    |   |       |       |   |-- Identifier z : int (line 12)
+    |   |       |       |   '-- Literal 0 : int (line 12)
+    |   |       |       |-- Block
+    |   |       |       |   '-- Assignment = : bool (line 13)
+    |   |       |       |       |-- Identifier result (line 13)
+    |   |       |       |       '-- Literal true : bool (line 13)
+    |   |       |       '-- Block
+    |   |       |           '-- Assignment = : bool (line 15)
+    |   |       |               |-- Identifier result (line 15)
+    |   |       |               '-- Literal false : bool (line 15)
+    |   |       '-- Block
+    |   |           '-- Assignment = : bool (line 18)
+    |   |               |-- Identifier result (line 18)
+    |   |               '-- Literal false : bool (line 18)
+    |   '-- Block
+    |       '-- Assignment = : bool (line 21)
+    |           |-- Identifier result (line 21)
+    |           '-- Literal false : bool (line 21)
+    '-- While while (line 24)
+        |-- BinaryOp > : bool (line 24)
+        |   |-- Identifier x : int (line 24)
+        |   '-- Literal 0 : int (line 24)
+        '-- Block
+            |-- While while (line 25)
+            |   |-- BinaryOp > : bool (line 25)
+            |   |   |-- Identifier y : int (line 25)
+            |   |   '-- Literal 0 : int (line 25)
+            |   '-- Block
+            |       |-- While while (line 26)
+            |       |   |-- BinaryOp > : bool (line 26)
+            |       |   |   |-- Identifier z : int (line 26)
+            |       |   |   '-- Literal 0 : int (line 26)
+            |       |   '-- Block
+            |       |       '-- Assignment = : int (line 27)
+            |       |           |-- Identifier z (line 27)
+            |       |           '-- BinaryOp - : int (line 27)
+            |       |               |-- Identifier z : int (line 27)
+            |       |               '-- Literal 1 : int (line 27)
+            |       '-- Assignment = : int (line 29)
+            |           |-- Identifier y (line 29)
+            |           '-- BinaryOp - : int (line 29)
+            |               |-- Identifier y : int (line 29)
+            |               '-- Literal 1 : int (line 29)
+            '-- Assignment = : int (line 31)
+                |-- Identifier x (line 31)
+                '-- BinaryOp - : int (line 31)
+                    |-- Identifier x : int (line 31)
+                    '-- Literal 1 : int (line 31)
+
+Symbol Table
+------------
+=== Detailed Symbol Table (Scope Level: 0) ===
+All Symbols:
+  - result : bool (declared at line 4, scope 0) [ACTIVE]
+  - z : int (declared at line 3, scope 0) [ACTIVE]
+  - y : int (declared at line 2, scope 0) [ACTIVE]
+  - x : int (declared at line 1, scope 0) [ACTIVE]
+================================================
+
+Three Address Code
+------------------
+x = 1
+y = 2
+z = 3
+t1 = x > 0
+ifFalse t1 goto L1
+t2 = y > 0
+ifFalse t2 goto L3
+t3 = z > 0
+ifFalse t3 goto L5
+result = true
+goto L6
+L5:
+result = false
+L6:
+goto L4
+L3:
+result = false
+L4:
+goto L2
+L1:
+result = false
+L2:
+L7:
+t4 = x > 0
+ifFalse t4 goto L8
+L9:
+t5 = y > 0
+ifFalse t5 goto L10
+L11:
+t6 = z > 0
+ifFalse t6 goto L12
+t7 = z - 1
+z = t7
+goto L11
+L12:
+t8 = y - 1
+y = t8
+goto L9
+L10:
+t9 = x - 1
+x = t9
+goto L7
+L8:
+
+Compilation Result
+------------------
+Compilation succeeded without lexical, syntax, or semantic errors.
+
+===== STDERR =====
+

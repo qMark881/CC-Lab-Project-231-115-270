@@ -212,25 +212,16 @@ static bool validate_instruction(const char *instruction) {
 }
 
 /* Validate the entire TAC program for consistency */
-bool tac_validate(const TacProgram *program) {
+bool tac_validate(TacProgram *program) {
     if (!program) return false;
-    
+    program->validation_errors = 0;
+
     bool valid = true;
-    int label_count = 0;
-    
-    /* Count label definitions */
-    for (size_t i = 0; i < program->count; ++i) {
-        const char *line = program->lines[i];
-        if (strchr(line, ':')) {
-            label_count++;
-        }
-    }
-    
     /* Validate each instruction */
     for (size_t i = 0; i < program->count; ++i) {
         if (!validate_instruction(program->lines[i])) {
             valid = false;
-            ((TacProgram *)program)->validation_errors++;
+            program->validation_errors++;
         }
     }
     
@@ -240,16 +231,20 @@ bool tac_validate(const TacProgram *program) {
         
         /* Check if goto targets exist */
         if (strstr(line, "goto L")) {
-            const char *target = strstr(line, "goto L") + 5;
-            char target_label[32];
-            sscanf(target, "%d", (int*)&target_label);
-            
-            /* Verify target label exists */
+            const char *target = strstr(line, "goto L") + 6;
+            int label_number = -1;
+            if (sscanf(target, "%d", &label_number) != 1) {
+                valid = false;
+                program->validation_errors++;
+                continue;
+            }
+
+            /* Verify target label exists as an exact label definition. */
             bool found = false;
+            char search_label[32];
+            snprintf(search_label, sizeof(search_label), "L%d:", label_number);
             for (size_t j = 0; j < program->count; ++j) {
-                char search_label[32];
-                snprintf(search_label, sizeof(search_label), "L%d:", target_label);
-                if (strstr(program->lines[j], search_label)) {
+                if (strcmp(program->lines[j], search_label) == 0) {
                     found = true;
                     break;
                 }
@@ -257,7 +252,7 @@ bool tac_validate(const TacProgram *program) {
             
             if (!found) {
                 valid = false;
-                ((TacProgram *)program)->validation_errors++;
+                program->validation_errors++;
             }
         }
     }

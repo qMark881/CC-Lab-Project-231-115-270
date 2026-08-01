@@ -1,0 +1,68 @@
+SOURCE: tests/valid/float_arithmetic.md
+EXPECTED_EXIT: 0
+ACTUAL_EXIT: 0
+
+===== STDOUT =====
+
+Abstract Syntax Tree
+--------------------
+Program program [line 1]
+  Declaration float : float [line 1]
+    Identifier x [line 1]
+  Declaration float : float [line 2]
+    Identifier y [line 2]
+  Assignment = : float [line 4]
+    Identifier x [line 4]
+    Literal 5.5 : float [line 4]
+  Assignment = : float [line 5]
+    Identifier y [line 5]
+    BinaryOp + : float [line 5]
+      BinaryOp * : float [line 5]
+        Identifier x : float [line 5]
+        Literal 2.0 : float [line 5]
+      Literal 1.5 : float [line 5]
+  Print print [line 7]
+    Identifier y : float [line 7]
+
+Visual AST
+----------
+'-- Program
+    |-- Declaration float : float (line 1)
+    |   '-- Identifier x (line 1)
+    |-- Declaration float : float (line 2)
+    |   '-- Identifier y (line 2)
+    |-- Assignment = : float (line 4)
+    |   |-- Identifier x (line 4)
+    |   '-- Literal 5.5 : float (line 4)
+    |-- Assignment = : float (line 5)
+    |   |-- Identifier y (line 5)
+    |   '-- BinaryOp + : float (line 5)
+    |       |-- BinaryOp * : float (line 5)
+    |       |   |-- Identifier x : float (line 5)
+    |       |   '-- Literal 2.0 : float (line 5)
+    |       '-- Literal 1.5 : float (line 5)
+    '-- Print print (line 7)
+        '-- Identifier y : float (line 7)
+
+Symbol Table
+------------
+=== Detailed Symbol Table (Scope Level: 0) ===
+All Symbols:
+  - y : float (declared at line 2, scope 0) [ACTIVE]
+  - x : float (declared at line 1, scope 0) [ACTIVE]
+================================================
+
+Three Address Code
+------------------
+x = 5.5
+t1 = x * 2.0
+t2 = t1 + 1.5
+y = t2
+print y
+
+Compilation Result
+------------------
+Compilation succeeded without lexical, syntax, or semantic errors.
+
+===== STDERR =====
+

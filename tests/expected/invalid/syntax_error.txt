@@ -1,0 +1,12 @@
+SOURCE: tests/invalid/syntax_error.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_SYNTAX_MISSING_SEMICOLON] Missing ';' at line 3: Missing semicolon
+[ERR_SYNTAX_MISSING_RPAREN] Missing ')' at line 5: Missing right parenthesis
+
+Compilation failed: 0 lexical error(s), 2 syntax error(s).

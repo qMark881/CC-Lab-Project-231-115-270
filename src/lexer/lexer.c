@@ -55,7 +55,7 @@ static char advance(Lexer *lexer) {
 }
 
 /* Skips whitespace and comments in the source code.
- * Handles both single-line (//) and multi-line (/* */) comments.
+ * Handles both single-line and block comments.
  * Sets pending error if a block comment is not properly terminated. */
 static void skip_whitespace_and_comments(Lexer *lexer) {
     for (;;) {
@@ -146,6 +146,15 @@ void lexer_init(Lexer *lexer, const char *source) {
     lexer->last_comment_line = 0;
 }
 
+void lexer_destroy(Lexer *lexer) {
+    if (!lexer) return;
+    free(lexer->pending_error);
+    lexer->pending_error = NULL;
+    free(lexer->last_comment);
+    lexer->last_comment = NULL;
+    lexer->has_pending_error = false;
+}
+
 /* Determines if a given identifier text is a keyword.
  * Returns the corresponding token type for keywords, or TOK_ID for regular identifiers. */
 static TokenType keyword_type(const char *text) {
@@ -179,6 +188,7 @@ Token lexer_next(Lexer *lexer) {
     }
 
     int line = lexer->line;
+    int column = lexer->column;
     char c = peek(lexer);
     if (c == '\0') {
         return make_token(TOK_EOF, "EOF", TYPE_VOID, line);
@@ -292,7 +302,7 @@ Token lexer_next(Lexer *lexer) {
     char invalid[2] = { c, '\0' };
     char error_msg[128];
     snprintf(error_msg, sizeof(error_msg), "[%s] Invalid character '%s' at line %d, column %d: %s", 
-             error_code_to_string(ERR_LEXICAL_INVALID_CHAR), invalid, line, lexer->column, 
+             error_code_to_string(ERR_LEXICAL_INVALID_CHAR), invalid, line, column, 
              error_code_description(ERR_LEXICAL_INVALID_CHAR));
     Token tok = make_invalid_token(error_msg, line);
     return tok;

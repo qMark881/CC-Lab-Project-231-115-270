@@ -1,0 +1,11 @@
+SOURCE: tests/invalid/undeclared_variable.md
+EXPECTED_EXIT: non-zero
+ACTUAL_EXIT: 1
+
+===== STDOUT =====
+
+
+===== STDERR =====
+[ERR_SEMANTIC_UNDECLARED_VAR] Undeclared variable 'y' at line 5: Undeclared variable
+
+Compilation failed: 1 semantic error(s).

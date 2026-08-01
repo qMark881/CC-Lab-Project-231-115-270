@@ -1,0 +1,228 @@
+SOURCE: tests/valid/complex_expressions.md
+EXPECTED_EXIT: 0
+ACTUAL_EXIT: 0
+
+===== STDOUT =====
+
+Abstract Syntax Tree
+--------------------
+Program program [line 1]
+  Declaration int : int [line 1]
+    Identifier x [line 1]
+  Declaration int : int [line 2]
+    Identifier y [line 2]
+  Declaration int : int [line 3]
+    Identifier z [line 3]
+  Declaration float : float [line 4]
+    Identifier a [line 4]
+  Declaration bool : bool [line 5]
+    Identifier b [line 5]
+  Assignment = : int [line 7]
+    Identifier x [line 7]
+    Literal 10 : int [line 7]
+  Assignment = : int [line 8]
+    Identifier y [line 8]
+    Literal 20 : int [line 8]
+  Assignment = : int [line 9]
+    Identifier z [line 9]
+    Literal 30 : int [line 9]
+  Assignment = : float [line 10]
+    Identifier a [line 10]
+    Literal 3.14 : float [line 10]
+  Assignment = : bool [line 11]
+    Identifier b [line 11]
+    Literal true : bool [line 11]
+  Assignment = : int [line 14]
+    Identifier x [line 14]
+    BinaryOp * : int [line 14]
+      BinaryOp + : int [line 14]
+        Identifier x : int [line 14]
+        Identifier y : int [line 14]
+      Identifier z : int [line 14]
+  Assignment = : int [line 15]
+    Identifier y [line 15]
+    BinaryOp / : int [line 15]
+      Identifier x : int [line 15]
+      BinaryOp + : int [line 15]
+        Identifier y : int [line 15]
+        Literal 1 : int [line 15]
+  Assignment = : int [line 16]
+    Identifier z [line 16]
+    BinaryOp % : int [line 16]
+      Identifier x : int [line 16]
+      Identifier y : int [line 16]
+  Assignment = : bool [line 19]
+    Identifier b [line 19]
+    BinaryOp && : bool [line 19]
+      BinaryOp > : bool [line 19]
+        Identifier x : int [line 19]
+        Identifier y : int [line 19]
+      BinaryOp < : bool [line 19]
+        Identifier z : int [line 19]
+        Identifier x : int [line 19]
+  Assignment = : bool [line 20]
+    Identifier b [line 20]
+    BinaryOp || : bool [line 20]
+      BinaryOp == : bool [line 20]
+        Identifier x : int [line 20]
+        Literal 10 : int [line 20]
+      BinaryOp != : bool [line 20]
+        Identifier y : int [line 20]
+        Literal 20 : int [line 20]
+  Assignment = : bool [line 21]
+    Identifier b [line 21]
+    UnaryOp ! : bool [line 21]
+      BinaryOp && : bool [line 21]
+        BinaryOp > : bool [line 21]
+          Identifier x : int [line 21]
+          Literal 0 : int [line 21]
+        BinaryOp < : bool [line 21]
+          Identifier y : int [line 21]
+          Literal 100 : int [line 21]
+  Assignment = : float [line 24]
+    Identifier a [line 24]
+    BinaryOp + : float [line 24]
+      Identifier x : int [line 24]
+      Literal 0.5 : float [line 24]
+  Assignment = : float [line 25]
+    Identifier a [line 25]
+    BinaryOp / : float [line 25]
+      Identifier a : float [line 25]
+      Literal 2.0 : float [line 25]
+
+Visual AST
+----------
+'-- Program
+    |-- Declaration int : int (line 1)
+    |   '-- Identifier x (line 1)
+    |-- Declaration int : int (line 2)
+    |   '-- Identifier y (line 2)
+    |-- Declaration int : int (line 3)
+    |   '-- Identifier z (line 3)
+    |-- Declaration float : float (line 4)
+    |   '-- Identifier a (line 4)
+    |-- Declaration bool : bool (line 5)
+    |   '-- Identifier b (line 5)
+    |-- Assignment = : int (line 7)
+    |   |-- Identifier x (line 7)
+    |   '-- Literal 10 : int (line 7)
+    |-- Assignment = : int (line 8)
+    |   |-- Identifier y (line 8)
+    |   '-- Literal 20 : int (line 8)
+    |-- Assignment = : int (line 9)
+    |   |-- Identifier z (line 9)
+    |   '-- Literal 30 : int (line 9)
+    |-- Assignment = : float (line 10)
+    |   |-- Identifier a (line 10)
+    |   '-- Literal 3.14 : float (line 10)
+    |-- Assignment = : bool (line 11)
+    |   |-- Identifier b (line 11)
+    |   '-- Literal true : bool (line 11)
+    |-- Assignment = : int (line 14)
+    |   |-- Identifier x (line 14)
+    |   '-- BinaryOp * : int (line 14)
+    |       |-- BinaryOp + : int (line 14)
+    |       |   |-- Identifier x : int (line 14)
+    |       |   '-- Identifier y : int (line 14)
+    |       '-- Identifier z : int (line 14)
+    |-- Assignment = : int (line 15)
+    |   |-- Identifier y (line 15)
+    |   '-- BinaryOp / : int (line 15)
+    |       |-- Identifier x : int (line 15)
+    |       '-- BinaryOp + : int (line 15)
+    |           |-- Identifier y : int (line 15)
+    |           '-- Literal 1 : int (line 15)
+    |-- Assignment = : int (line 16)
+    |   |-- Identifier z (line 16)
+    |   '-- BinaryOp % : int (line 16)
+    |       |-- Identifier x : int (line 16)
+    |       '-- Identifier y : int (line 16)
+    |-- Assignment = : bool (line 19)
+    |   |-- Identifier b (line 19)
+    |   '-- BinaryOp && : bool (line 19)
+    |       |-- BinaryOp > : bool (line 19)
+    |       |   |-- Identifier x : int (line 19)
+    |       |   '-- Identifier y : int (line 19)
+    |       '-- BinaryOp < : bool (line 19)
+    |           |-- Identifier z : int (line 19)
+    |           '-- Identifier x : int (line 19)
+    |-- Assignment = : bool (line 20)
+    |   |-- Identifier b (line 20)
+    |   '-- BinaryOp || : bool (line 20)
+    |       |-- BinaryOp == : bool (line 20)
+    |       |   |-- Identifier x : int (line 20)
+    |       |   '-- Literal 10 : int (line 20)
+    |       '-- BinaryOp != : bool (line 20)
+    |           |-- Identifier y : int (line 20)
+    |           '-- Literal 20 : int (line 20)
+    |-- Assignment = : bool (line 21)
+    |   |-- Identifier b (line 21)
+    |   '-- UnaryOp ! : bool (line 21)
+    |       '-- BinaryOp && : bool (line 21)
+    |           |-- BinaryOp > : bool (line 21)
+    |           |   |-- Identifier x : int (line 21)
+    |           |   '-- Literal 0 : int (line 21)
+    |           '-- BinaryOp < : bool (line 21)
+    |               |-- Identifier y : int (line 21)
+    |               '-- Literal 100 : int (line 21)
+    |-- Assignment = : float (line 24)
+    |   |-- Identifier a (line 24)
+    |   '-- BinaryOp + : float (line 24)
+    |       |-- Identifier x : int (line 24)
+    |       '-- Literal 0.5 : float (line 24)
+    '-- Assignment = : float (line 25)
+        |-- Identifier a (line 25)
+        '-- BinaryOp / : float (line 25)
+            |-- Identifier a : float (line 25)
+            '-- Literal 2.0 : float (line 25)
+
+Symbol Table
+------------
+=== Detailed Symbol Table (Scope Level: 0) ===
+All Symbols:
+  - b : bool (declared at line 5, scope 0) [ACTIVE]
+  - a : float (declared at line 4, scope 0) [ACTIVE]
+  - z : int (declared at line 3, scope 0) [ACTIVE]
+  - y : int (declared at line 2, scope 0) [ACTIVE]
+  - x : int (declared at line 1, scope 0) [ACTIVE]
+================================================
+
+Three Address Code
+------------------
+x = 10
+y = 20
+z = 30
+a = 3.14
+b = true
+t1 = x + y
+t2 = t1 * z
+x = t2
+t3 = y + 1
+t4 = x / t3
+y = t4
+t5 = x % y
+z = t5
+t6 = x > y
+t7 = z < x
+t8 = t6 && t7
+b = t8
+t9 = x == 10
+t10 = y != 20
+t11 = t9 || t10
+b = t11
+t12 = x > 0
+t13 = y < 100
+t14 = t12 && t13
+t15 = !t14
+b = t15
+t16 = x + 0.5
+a = t16
+t17 = a / 2.0
+a = t17
+
+Compilation Result
+------------------
+Compilation succeeded without lexical, syntax, or semantic errors.
+
+===== STDERR =====
+

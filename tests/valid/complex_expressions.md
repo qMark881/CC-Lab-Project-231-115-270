@@ -21,7 +21,7 @@ b = (x > y) && (z < x);
 b = (x == 10) || (y != 20);
 b = !((x > 0) && (y < 100));
 
-// Mixed expressions
-x = (int)a;
-y = x + (int)a;
+// Mixed numeric expressions allowed by the language
+a = x + 0.5;
+a = a / 2.0;
 ```

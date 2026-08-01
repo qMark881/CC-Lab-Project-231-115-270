@@ -1,0 +1,100 @@
+SOURCE: tests/valid/nested_blocks.md
+EXPECTED_EXIT: 0
+ACTUAL_EXIT: 0
+
+===== STDOUT =====
+
+Abstract Syntax Tree
+--------------------
+Program program [line 1]
+  Declaration int : int [line 1]
+    Identifier x [line 1]
+  Assignment = : int [line 3]
+    Identifier x [line 3]
+    Literal 1 : int [line 3]
+  If if [line 5]
+    BinaryOp > : bool [line 5]
+      Identifier x : int [line 5]
+      Literal 0 : int [line 5]
+    Block block [line 5]
+      Declaration int : int [line 6]
+        Identifier y [line 6]
+      Assignment = : int [line 7]
+        Identifier y [line 7]
+        BinaryOp + : int [line 7]
+          Identifier x : int [line 7]
+          Literal 1 : int [line 7]
+      Block block [line 9]
+        Declaration int : int [line 10]
+          Identifier z [line 10]
+        Assignment = : int [line 11]
+          Identifier z [line 11]
+          BinaryOp + : int [line 11]
+            Identifier y : int [line 11]
+            Literal 1 : int [line 11]
+        Print print [line 12]
+          Identifier z : int [line 12]
+      Print print [line 15]
+        Identifier y : int [line 15]
+
+Visual AST
+----------
+'-- Program
+    |-- Declaration int : int (line 1)
+    |   '-- Identifier x (line 1)
+    |-- Assignment = : int (line 3)
+    |   |-- Identifier x (line 3)
+    |   '-- Literal 1 : int (line 3)
+    '-- If if (line 5)
+        |-- BinaryOp > : bool (line 5)
+        |   |-- Identifier x : int (line 5)
+        |   '-- Literal 0 : int (line 5)
+        '-- Block
+            |-- Declaration int : int (line 6)
+            |   '-- Identifier y (line 6)
+            |-- Assignment = : int (line 7)
+            |   |-- Identifier y (line 7)
+            |   '-- BinaryOp + : int (line 7)
+            |       |-- Identifier x : int (line 7)
+            |       '-- Literal 1 : int (line 7)
+            |-- Block
+            |   |-- Declaration int : int (line 10)
+            |   |   '-- Identifier z (line 10)
+            |   |-- Assignment = : int (line 11)
+            |   |   |-- Identifier z (line 11)
+            |   |   '-- BinaryOp + : int (line 11)
+            |   |       |-- Identifier y : int (line 11)
+            |   |       '-- Literal 1 : int (line 11)
+            |   '-- Print print (line 12)
+            |       '-- Identifier z : int (line 12)
+            '-- Print print (line 15)
+                '-- Identifier y : int (line 15)
+
+Symbol Table
+------------
+=== Detailed Symbol Table (Scope Level: 0) ===
+All Symbols:
+  - z : int (declared at line 10, scope 2) [INACTIVE]
+  - y : int (declared at line 6, scope 1) [INACTIVE]
+  - x : int (declared at line 1, scope 0) [ACTIVE]
+================================================
+
+Three Address Code
+------------------
+x = 1
+t1 = x > 0
+ifFalse t1 goto L2
+t2 = x + 1
+y = t2
+t3 = y + 1
+z = t3
+print z
+print y
+L2:
+
+Compilation Result
+------------------
+Compilation succeeded without lexical, syntax, or semantic errors.
+
+===== STDERR =====
+
